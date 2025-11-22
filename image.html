@@ -8,7 +8,6 @@
   <meta name="theme-color" content="#111" />
   <title>SteveAI – Image Generator</title>
   
-  <!-- Favicon -->
   <link rel="icon" href="/assets/favicon.png" />
 
   <style>
@@ -48,6 +47,8 @@
     input {
       width: 60%;
       margin-bottom: 1em;
+      background: #222;
+      color: #fff;
     }
     button {
       background: #ffae00;
@@ -58,8 +59,11 @@
     button:hover {
       background: #ffc107;
     }
+    #result {
+        margin-top: 2em;
+        min-height: 100px;
+    }
     #result img {
-      margin-top: 2em;
       max-width: 90%;
       border-radius: 1em;
       box-shadow: 0 0 20px rgba(255, 174, 0, 0.3);
@@ -83,9 +87,10 @@
     <button id="generateBtn">Generate</button>
     <div id="result"></div>
   </main>
-  <script src="./image.js"></script> 
+ 
   <script type="module">
-    import { generateImage } from '/index.js';
+    import { generateImage } from './image.js';
+
     const generateBtn = document.getElementById("generateBtn");
     const promptInput = document.getElementById("prompt");
     const resultDiv = document.getElementById("result");
@@ -94,20 +99,22 @@
       const prompt = promptInput.value.trim();
       if (!prompt) return alert("Please enter a prompt!");
 
-      resultDiv.innerHTML = "<p>Generating...</p>";
+      resultDiv.innerHTML = "<p style='color:#aaa'>Generating... this may take a few seconds.</p>";
 
       try {
         const imageUrl = await generateImage(prompt);
+        
         if (!imageUrl) {
-          resultDiv.innerHTML = `<p style="color:red;">Error: No image returned.</p>`;
+          resultDiv.innerHTML = `<p style="color:red;">Error: No image returned from API.</p>`;
           return;
         }
 
         resultDiv.innerHTML = `
           <img src="${imageUrl}" alt="Generated Image">
-          <p><a href="${imageUrl}" target="_blank">Open in new tab</a></p>
+          <p><a href="${imageUrl}" target="_blank" style="color:#ffae00;">Open full size</a></p>
         `;
       } catch (err) {
+        console.error(err);
         resultDiv.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
       }
     });
