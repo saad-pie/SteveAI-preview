@@ -384,16 +384,16 @@ async function getChatReply(msg) {
 
   switch (mode) {
     case 'reasoning':
-      model = "provider-3/deepseek-v3-0324";
+      model = "provider-2/deepseek-r1-distill-qwen-1.5b";
       botName = "SteveAI-reasoning";
       break;
     case 'general': 
-      model = "provider-4/qwen-72b"; // Assuming a suitable model for 'general'
-      botName = "SteveAI-general";
+      model = "provider-2/gemini-2.5-flash"; 
+      botName = "SteveAI-fast";
       break;
     case 'chat':
     default:
-      model = "provider-3/gpt-5-nano";
+      model = "provider-5/gpt-5-nano";
       botName = "SteveAI-chat";
       break;
   }
