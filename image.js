@@ -1,3 +1,5 @@
+import { API_BASE, API_KEYS, proxiedURL } from './config.js';
+
 // 🌟 IMAGE GENERATION (HTTP FETCH | IMAGEN-4)
 async function generateImage(prompt) {
   if (!prompt) throw new Error("No prompt provided");
