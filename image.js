@@ -1,5 +1,5 @@
 import config from './config.js'; 
-const API_URL = "https://api.a4f.co/v1/images/generations";
+
 // 🌟 IMAGE GENERATION (HTTP FETCH | IMAGEN-4)
 // Added 'export' so this function can be imported in the HTML file
 export async function generateImage(prompt) {
@@ -9,7 +9,7 @@ export async function generateImage(prompt) {
     // access keys via config object
     const apiKey = config.API_KEYS[0]; 
 
-    const response = await fetch("https://api.a4f.co/v1/images/generate", {
+    const response = await fetch("https://api.a4f.co/v1/images/generations", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${apiKey}`,
