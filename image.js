@@ -1,7 +1,6 @@
 import config from './config.js'; 
 
 // --- AVAILABLE MODELS ---
-// This array will populate the dropdown menu in Image.html
 export const IMAGE_MODELS = [
     { id: "provider-4/sdxl-lite", name: "SDXL Lite (Fast)" },
     { id: "provider-4/flux-schnell", name: "Flux Schnell (Fast)" },
@@ -15,9 +14,10 @@ export const IMAGE_MODELS = [
 ];
 
 // 🌟 IMAGE GENERATION (HTTP FETCH)
-// The function now accepts the model name as an argument
-export async function generateImage(prompt, modelName = IMAGE_MODELS[5].id) { // Defaults to Imagen 4
+// Now accepts numImages for the 'n' parameter in the API call
+export async function generateImage(prompt, modelName = IMAGE_MODELS[5].id, numImages = 1) { 
   if (!prompt) throw new Error("No prompt provided");
+  if (numImages < 1 || numImages > 4) throw new Error("Number of images must be between 1 and 4."); // API limits often exist
 
   try {
     const apiKey = config.API_KEYS[0]; 
@@ -29,11 +29,9 @@ export async function generateImage(prompt, modelName = IMAGE_MODELS[5].id) { //
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        // Use the selected modelName
         model: modelName, 
         prompt,
-        n: 1,
-        // Using a standard size, though some models may support others
+        n: numImages, // Use the provided numImages value
         size: "1024x1024" 
       })
     });
@@ -47,11 +45,17 @@ export async function generateImage(prompt, modelName = IMAGE_MODELS[5].id) { //
         throw new Error(`HTTP Error: ${response.status} ${response.statusText}. API Error: ${errorText}`);
     }
 
-    return data?.data?.[0]?.url || null;
+    // Expect an array of URLs now
+    const imageUrls = data?.data?.map(item => item.url) || [];
+
+    if (imageUrls.length === 0) {
+        throw new Error("API response received, but no image URLs were found.");
+    }
+    
+    return imageUrls; // Return an array of URLs
 
   } catch (err) {
     console.error("Image generation error:", err);
     throw err;
   }
 }
-  
