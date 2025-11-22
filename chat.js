@@ -119,19 +119,27 @@ function parseThinkingResponse(text) {
 
 /**
  * Parses the answer for the specific image generation command pattern.
- * FIXED: Regex is now highly robust to handle missing colons, extra spaces, and model formatting.
- * @param {string} text - The raw AI answer text (after thinking block removal, if any).
+ * FIXED: Uses a simple 'includes' check first for robustness, then uses a flexible regex for extraction.
+ * @param {string} text - The raw AI answer text.
  * @returns {{prompt: string, model: string} | null}
  */
 function parseImageGenerationCommand(text) {
-    // 1. Clean the text aggressively: Remove newlines, bolding (**), the reasoning emoji (🧠), and the header text before attempting the precise regex match.
+    const lowerText = text.toLowerCase();
+    
+    // 1. QUICK CHECK: If the text doesn't even contain the core phrase, exit immediately.
+    if (!lowerText.includes("image generated")) {
+        return null;
+    }
+    
+    // 2. EXTRACTION: The command is present, so now we clean and use a flexible regex to get the parts.
+    
+    // Aggressive cleanup for extra characters/formatting the model might add
     let cleanText = text.trim()
-        .replace(/\n/g, ' ') // Replace newlines with spaces
+        .replace(/\n/g, ' ') 
         .replace(/(\*\*|🧠|Reasoning\/Steps)/gi, '') // Remove bolding, emoji, and header text
         .trim();
 
-    // 2. The Regex: Looks for "Image Generated" followed by an optional colon/space, then captures the prompt (Group 1), then captures the model (Group 2), then checks for the end phrase.
-    // The \s* (zero or more whitespace) makes it robust against inconsistent spacing.
+    // Regex to capture the prompt (G1) and model (G2), being very tolerant of spacing and the colon.
     const imgCommandRegex = /^\s*Image Generated\s*:?\s*(.*?)\s*,\s*model used:\s*(.*?)\s*,\s*number of images 1\(always\)\s*$/i;
 
     const match = cleanText.match(imgCommandRegex);
@@ -143,6 +151,8 @@ function parseImageGenerationCommand(text) {
             model: match[2].trim()  
         };
     }
+    
+    // If the quick check passed but the extraction failed (e.g., command was cut off), return null.
     return null;
 }
 
