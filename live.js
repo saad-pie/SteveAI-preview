@@ -1,9 +1,8 @@
 // live.js
 
-// 🛑 WARNING: This API key is exposed in the client. USE A SERVER-SIDE PROXY IN PRODUCTION.
-const GEMINI_API_KEY = "AIzaSyDL3i0fCKkSnxnTG4-FLvfUxudtD4rKlos";
+// 🛑 SECURITY UPDATE: API Key is REMOVED from the client and must be handled by the serverless proxy.
+const PROXY_ENDPOINT = "/.netlify/functions/gemini-audio-proxy"; 
 const MODEL_ID = "models/gemini-2.5-flash-native-audio-preview-09-2025";
-const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_ID}:generateContent?key=${GEMINI_API_KEY}`;
 
 // UI Elements
 const chatContainer = document.getElementById('chat-container');
@@ -18,9 +17,6 @@ let audioContext;
 let audioSource;
 
 // Parameters (as requested: closable voice)
-// Note: 'closable' is not a standard Gemini parameter, but often refers to system/session management.
-// For the native audio model, the voice is determined by the model itself or server configuration, 
-// and the session is usually "closable" by simply stopping the stream/request.
 const customParams = {
     voice: "closable",
     session: "closable" 
@@ -63,7 +59,8 @@ function setStatus(message, isRecording = false) {
 async function startRecording() {
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+        // Use a high-quality, widely supported format if possible, or stick to webm
+        mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' }); 
         audioChunks = [];
 
         mediaRecorder.ondataavailable = event => {
@@ -83,56 +80,39 @@ async function startRecording() {
 function stopRecording() {
     if (mediaRecorder && mediaRecorder.state === 'recording') {
         mediaRecorder.stop();
-        // The mediaRecorder.onstop callback will handle the upload.
         setStatus('Processing...', false);
     }
 }
 
-// --- API Interaction ---
+// --- API Interaction (Now points to Proxy) ---
 
 async function uploadAudio() {
-    // 1. Convert audio chunks to a single Blob
     const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
     
-    // 2. Read Blob as ArrayBuffer for encoding
     const reader = new FileReader();
     reader.readAsArrayBuffer(audioBlob);
     
     reader.onloadend = async () => {
         const arrayBuffer = reader.result;
-        // 3. Base64 encode the audio data
+        // Base64 encode the audio data
         const base64Audio = btoa(
             new Uint8Array(arrayBuffer)
                 .reduce((data, byte) => data + String.fromCharCode(byte), '')
         );
 
-        // 4. Construct the API Payload
+        // 4. Construct the Payload for the PROXY
         const payload = {
-            contents: [
-                {
-                    role: "user",
-                    parts: [
-                        // The audio data part
-                        {
-                            inlineData: {
-                                mimeType: audioBlob.type,
-                                data: base64Audio
-                            }
-                        }
-                    ]
-                }
-            ],
-            config: {
-                // Add any necessary configuration here, like system instructions or safety settings
-                // The 'closable' voice/session parameters are primarily for server-side control,
-                // but we include them here if they map to a valid config field later.
-                custom_params: customParams 
-            }
+            // Send the necessary data to the proxy function
+            model: MODEL_ID, 
+            audioData: base64Audio,
+            mimeType: audioBlob.type,
+            config: { custom_params: customParams } 
         };
 
         try {
-            setStatus('Sending audio to Gemini...');
-            const response = await fetch(API_URL, {
+            setStatus('Sending audio to Proxy...');
+            // Call the Netlify Serverless Function endpoint
+            const response = await fetch(PROXY_ENDPOINT, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -140,14 +120,14 @@ async function uploadAudio() {
 
             if (!response.ok) {
                 const errorText = await response.text();
-                throw new Error(`API Error: ${response.status} - ${errorText}`);
+                throw new Error(`Proxy Error: ${response.status} - ${errorText}`);
             }
 
             const data = await response.json();
             handleGeminiResponse(data);
 
         } catch (error) {
-            console.error('Gemini API request failed:', error);
+            console.error('Proxy request failed:', error);
             setStatus(`API Failed: ${error.message}`, false);
             addMessage('Sorry, I encountered an error.', 'ai');
         }
@@ -158,29 +138,29 @@ async function uploadAudio() {
 
 /**
  * Handles the response from the Gemini API, displaying the text and playing the audio.
- * @param {object} data - The JSON response from the API.
+ * The proxy should ensure the response format is clean.
+ * @param {object} data - The JSON response from the proxy/API.
  */
 function handleGeminiResponse(data) {
     setStatus('Receiving response...', false);
-    const candidate = data.candidates?.[0]?.content?.parts?.[0];
     
-    if (candidate) {
-        const text = candidate.text || "No text response.";
-        addMessage(text, 'ai');
+    // Assuming the proxy returns a simplified object with text and audio data
+    const text = data.text || "No text response.";
+    addMessage(text, 'ai');
 
-        const audioPart = candidate.inlineData;
-        if (audioPart && audioPart.mimeType.startsWith('audio/') && audioPart.data) {
-            playAudio(audioPart.data, audioPart.mimeType);
-        }
-    } else {
-        const error = data.candidates?.[0]?.finishReason || "Unknown error.";
-        addMessage(`AI Error: ${error}`, 'ai');
+    const audioPart = data.audio; // Proxy should package the audio part here
+    if (audioPart && audioPart.mimeType.startsWith('audio/') && audioPart.data) {
+        playAudio(audioPart.data, audioPart.mimeType);
     }
-    setStatus('Ready', false);
+    
+    // If we only received text or had an error but no audio, set status back to ready
+    if (!audioPart) {
+        setStatus('Ready', false);
+    }
 }
 
 /**
- * Decodes and plays the audio data received from the Gemini API.
+ * Decodes and plays the audio data received from the proxy.
  * @param {string} base64Data - Base64 encoded audio data.
  * @param {string} mimeType - The MIME type of the audio.
  */
@@ -206,4 +186,5 @@ recordBtn.addEventListener('click', startRecording);
 stopBtn.addEventListener('click', stopRecording);
 
 // Initial message
-addMessage("Press 'Start Recording' and talk to SteveAI!", 'ai');
+addMessage("Press 'Start Recording' and talk to SteveAI! (Proxy Enabled)", 'ai');
+    
