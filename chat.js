@@ -23,7 +23,7 @@ const modeSelect = document.getElementById('modeSelect');
 let memory = {};
 let turn = 0;
 let memorySummary = "";
-// REMOVED: const TYPE_DELAY = 2;
+// const TYPE_DELAY = 2; // REMOVED
 const TOKEN_BUDGET = 2200;
 const approxTokens = s => Math.ceil((s || "").length / 4);
 
@@ -45,11 +45,11 @@ function shouldSummarize() {
 }
 
 /**
- * Generates a random delay for a more natural typing effect (5ms to 50ms).
+ * Generates a random delay for a more natural, fast typing effect (1ms to 10ms).
  * @returns {number} Random delay in milliseconds.
  */
 function getRandomTypingDelay() {
-    return Math.floor(Math.random() * (50 - 5 + 1)) + 5;
+    return Math.floor(Math.random() * (10 - 1 + 1)) + 1;
 }
 
 // --- Summarization ---
@@ -120,16 +120,11 @@ function parseThinkingResponse(text) {
 /**
  * Parses the answer for the specific image generation command pattern.
  * Pattern: "**Image Generated**:$prompt , model used: model , number of images 1(always)"
- * FIXED: Regex is made robust to handle bolding and whitespace around the main command.
  * @param {string} text - The raw AI answer text (after thinking block removal, if any).
  * @returns {{prompt: string, model: string} | null}
  */
 function parseImageGenerationCommand(text) {
     // This regex handles optional markdown bolding (**), case-insensitivity, and leading/trailing spaces.
-    // (\*\*?\s*Image Generated\s*\*\*?)  <- Matches "Image Generated", "**Image Generated**", or "*Image Generated*" with optional spaces
-    // : (.*?)                          <- Captures the prompt (Group 1)
-    // \s*,\s*model used:\s*(.*?)       <- Captures the model name (Group 2)
-    // \s*,\s*number of images 1\(always\)$/i <- Matches the rest, case-insensitively
     const imgCommandRegex = /\s*(\*\*?\s*Image Generated\s*\*\*?)\s*:\s*(.*?)\s*,\s*model used:\s*(.*?)\s*,\s*number of images 1\(always\)$/i;
     
     const match = text.trim().match(imgCommandRegex);
@@ -571,4 +566,3 @@ themeToggle.onclick = () => toggleTheme();
 
 // --- Clear Chat (Unchanged) ---
 clearChatBtn.onclick = () => clearChat();
-          
