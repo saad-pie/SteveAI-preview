@@ -1,5 +1,5 @@
 import config from './config.js'; 
-
+const API_URL = "https://api.a4f.co/v1/images/generations";
 // 🌟 IMAGE GENERATION (HTTP FETCH | IMAGEN-4)
 // Added 'export' so this function can be imported in the HTML file
 export async function generateImage(prompt) {
