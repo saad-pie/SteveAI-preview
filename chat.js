@@ -132,8 +132,7 @@ function parseImageGenerationCommand(text) {
     const match = text.trim().match(imgCommandRegex);
     
     if (match) {
-        // The original parser logic assumed capture groups from the complex regex.
-        // With the simplified regex, the prompt is group 1, and model is group 2.
+        // The simplified regex groups are 1 (prompt) and 2 (model)
         return {
             prompt: match[1].trim(), 
             model: match[2].trim()  
@@ -517,8 +516,8 @@ async function getChatReply(msg) {
 
   const systemPrompt = `You are ${botName}, made by saadpie. 
   
-  1. **Reasoning:** You must always output your reasoning steps inside <think> tags, followed by the final answer.
-  2. **Image Generation:** If the user asks you to *generate*, *create*, or *show* an image, you must reply with *only* the following exact pattern (do not add any other text or markdown formatting outside this pattern, not even thinking steps): 
+  1. **Reasoning:** You must always output your reasoning steps inside <think> tags, followed by the final answer, UNLESS an image is being generated.
+  2. **Image Generation:** If the user asks you to *generate*, *create*, or *show* an image, you must reply with *only* the following exact pattern (do not add any other text, reasoning, markdown, or wrappers outside this pattern): 
      Image Generated:$prompt , model used: model name , number of images 1(always)
      Available image models: ${imageModelNames}. Use the most relevant model name in your response.
   
