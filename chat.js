@@ -2,9 +2,7 @@
 // IMPORTANT: This file relies on 'marked.js' being loaded in your HTML for markdown parsing.
 
 // --- Module Imports ---
-// Import configuration (API_KEYS, PROXY, etc.)
 import config from './config.js'; 
-// Import image generation function
 import { generateImage, IMAGE_MODELS } from './image.js'; 
 
 // --- Config Variables from Import ---
@@ -19,7 +17,7 @@ const form = document.getElementById('inputForm');
 const input = document.getElementById('messageInput');
 const themeToggle = document.getElementById('themeToggle');
 const clearChatBtn = document.getElementById('clearChat');
-const modeSelect = document.getElementById('modeSelect'); // optional dropdown: "chat" | "reasoning"
+const modeSelect = document.getElementById('modeSelect');
 
 // --- Memory / Summary ---
 let memory = {};
@@ -83,7 +81,7 @@ async function buildContext() {
 // --- Markdown Parser ---
 function markdownToHTML(t) { return marked.parse(t || ""); }
 
-// --- UI: Add Messages ---
+// --- UI: Add Messages (Logic is unchanged, kept for completeness) ---
 function addMessage(text, sender) {
   const container = document.createElement('div');
   container.className = 'message-container ' + sender;
@@ -120,7 +118,8 @@ function addMessage(text, sender) {
   }
 }
 
-// --- Message Actions ---
+// ... (addUserActions and addBotActions remain unchanged)
+
 function addUserActions(container, bubble, text) {
   const actions = document.createElement('div');
   actions.className = 'message-actions';
@@ -192,6 +191,8 @@ async function fetchAI(payload) {
 }
 
 // --- Commands ---
+// ... (The rest of the command functions remain largely unchanged)
+
 function toggleTheme() {
   document.body.classList.toggle('light');
   addMessage('🌓 Theme toggled.', 'bot');
@@ -234,16 +235,18 @@ function showAbout() {
 Built by *saadpie* — the bot from the future.
 
 - Models: GPT-5-Nano, DeepSeek-V3, ${IMAGE_MODELS.map(m => m.name).join(', ')}
-- Modes: Chat | Reasoning
+- Modes: Chat | Reasoning | General
 - Features: Context memory, Summarization, Commands, Theme toggle, Speech, Export
 
 _Type /help to explore commands._
   `;
   addMessage(text, 'bot');
 }
+
+// --- FIX: Include 'general' mode in allowed options ---
 function changeMode(arg) {
-  if (!arg || !['chat', 'reasoning'].includes(arg.toLowerCase())) {
-    addMessage('⚙️ Usage: /mode chat | reasoning', 'bot');
+  if (!arg || !['chat', 'reasoning', 'general'].includes(arg.toLowerCase())) {
+    addMessage('⚙️ Usage: /mode chat | reasoning | general', 'bot');
     return;
   }
   if (modeSelect) modeSelect.value = arg.toLowerCase();
@@ -268,13 +271,13 @@ function showHelp() {
 - /contact — Show contact info
 - /play — Summarize / replay conversation
 - /about — About SteveAI
-- /mode <chat|reasoning> — Change mode
+- /mode <chat|reasoning|general> — Change mode
 - /time — Show local time
   `;
   addMessage(helpText, 'bot');
 }
 
-// --- Command Router ---
+// --- Command Router (Unchanged from previous version) ---
 async function handleCommand(cmd) {
   const parts = cmd.trim().split(' ');
   const command = parts[0].toLowerCase();
@@ -311,12 +314,10 @@ async function handleCommand(cmd) {
         return;
       }
 
-      // Notify user generation started (uses typing animation)
       const modelName = IMAGE_MODELS.find(m => m.id === model)?.name || model.split('/').pop();
       addMessage(`🎨 Generating **${numImages}** image(s) with **${modelName}** for: *${prompt}* ...`, 'bot');
 
       try {
-        // Use the imported function with full parameters
         const imageUrls = await generateImage(prompt, model, numImages);
 
         if (!imageUrls || imageUrls.length === 0) {
@@ -324,7 +325,6 @@ async function handleCommand(cmd) {
           return;
         }
 
-        // Build HTML for all images
         const imageHTML = imageUrls.map((url, index) => {
             return `
 <figure style="margin:5px 0;">
@@ -341,7 +341,6 @@ async function handleCommand(cmd) {
 ${imageHTML}
         `;
 
-        // Append immediately (bypass typing animation to avoid broken HTML)
         const container = document.createElement('div');
         container.className = 'message-container bot';
 
@@ -351,7 +350,7 @@ ${imageHTML}
 
         const content = document.createElement('div');
         content.className = 'bubble-content';
-        content.innerHTML = markdownToHTML(finalHTML); // Note: markdownToHTML won't handle the figures perfectly, but it prevents the typing animation
+        content.innerHTML = markdownToHTML(finalHTML);
         bubble.appendChild(content);
 
         chat.appendChild(container);
@@ -375,13 +374,30 @@ ${imageHTML}
 }
 
 // --- Chat Flow ---
+// --- FIX: Logic updated to map the new 'general' mode to a model ---
 async function getChatReply(msg) {
   const context = await buildContext();
   const mode = (modeSelect?.value || 'chat').toLowerCase();
-  const model = mode === 'reasoning'
-    ? "provider-3/deepseek-v3-0324"
-    : "provider-3/gpt-5-nano";
-  const botName = mode === 'reasoning' ? "SteveAI-reasoning" : "SteveAI-chat";
+  
+  let model;
+  let botName;
+
+  switch (mode) {
+    case 'reasoning':
+      model = "provider-3/deepseek-v3-0324";
+      botName = "SteveAI-reasoning";
+      break;
+    case 'general': 
+      model = "provider-4/qwen-72b"; // Assuming a suitable model for 'general'
+      botName = "SteveAI-general";
+      break;
+    case 'chat':
+    default:
+      model = "provider-3/gpt-5-nano";
+      botName = "SteveAI-chat";
+      break;
+  }
+
   const payload = {
     model,
     messages: [
@@ -395,13 +411,12 @@ async function getChatReply(msg) {
   return reply;
 }
 
-// --- Form Submit ---
+// --- Form Submit (Unchanged) ---
 form.onsubmit = async e => {
   e.preventDefault();
   const msg = input.value.trim();
   if (!msg) return;
   if (msg.startsWith('/')) {
-    // Command handling is asynchronous
     await handleCommand(msg);
     input.value = '';
     input.style.height = 'auto';
@@ -418,15 +433,15 @@ form.onsubmit = async e => {
   }
 };
 
-// --- Input Auto Resize ---
+// --- Input Auto Resize (Unchanged) ---
 input.oninput = () => {
   input.style.height = 'auto';
   input.style.height = input.scrollHeight + 'px';
 };
 
-// --- Theme Toggle ---
+// --- Theme Toggle (Unchanged) ---
 themeToggle.onclick = () => toggleTheme();
 
-// --- Clear Chat ---
+// --- Clear Chat (Unchanged) ---
 clearChatBtn.onclick = () => clearChat();
-        
+    
