@@ -27,5 +27,3 @@ async function generateImage(prompt) {
     throw err;
   }
 }
-
-window.generateImage = generateImage;
