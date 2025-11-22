@@ -350,7 +350,7 @@ async function fetchAI(payload) {
   throw new Error(lastErrText || "API error");
 }
 
-// --- Commands (Unchanged) ---
+// --- Commands ---
 function toggleTheme() {
   document.body.classList.toggle('light');
   addMessage('🌓 Theme toggled.', 'bot');
@@ -392,8 +392,8 @@ function showAbout() {
 🤖 **About SteveAI**
 Built by *saadpie* — the bot from the future.
 
-- Models: GPT-5-Nano, DeepSeek-R1, Gemini-2.5-flash, ${IMAGE_MODELS.map(m => m.name).join(', ')}
-- Modes: Chat | Reasoning | Fast
+- Models: GPT-5-Nano, DeepSeek-R1, Gemini-2.5-flash, Qwen-3, Ax-4.0, GLM-4.5, Deepseek-v3, Allam-7b, ${IMAGE_MODELS.map(m => m.name).join(', ')}
+- Modes: Chat | Reasoning | Fast | Math | Korean | General | Coding | Arabic
 - Features: Context memory, Summarization, Commands, Theme toggle, Speech, Export
 
 _Type /help to explore commands._
@@ -401,8 +401,9 @@ _Type /help to explore commands._
   addMessage(text, 'bot');
 }
 function changeMode(arg) {
-  if (!arg || !['chat', 'reasoning', 'fast'].includes(arg.toLowerCase())) {
-    addMessage('⚙️ Usage: /mode chat | reasoning | fast', 'bot');
+  const allowedModes = ['chat', 'reasoning', 'fast', 'math', 'korean', 'general', 'coding', 'arabic'];
+  if (!arg || !allowedModes.includes(arg.toLowerCase())) {
+    addMessage(`⚙️ Usage: /mode ${allowedModes.join(' | ')}`, 'bot');
     return;
   }
   if (modeSelect) modeSelect.value = arg.toLowerCase();
@@ -427,7 +428,7 @@ function showHelp() {
 - /contact — Show contact info
 - /play — Summarize / replay conversation
 - /about — About SteveAI
-- /mode <chat|reasoning|fast> — Change mode
+- /mode <chat|reasoning|fast|math|korean|general|coding|arabic> — Change mode
 - /time — Show local time
   `;
   addMessage(helpText, 'bot');
@@ -548,7 +549,7 @@ ${imageHTML}
   }
 }
 
-// --- Chat Flow (UPDATED System Prompt) ---
+// --- Chat Flow (UPDATED System Prompt AND Mode Logic) ---
 async function getChatReply(msg) {
   const context = await buildContext();
   const mode = (modeSelect?.value || 'chat').toLowerCase();
@@ -557,15 +558,35 @@ async function getChatReply(msg) {
   let botName;
 
   switch (mode) {
-    case 'reasoning':
+    case 'math':
+      model = "provider-1/qwen3-235b-a22b-instruct-2507";
+      botName = "SteveAI-math";
+      break;
+    case 'korean':
+      model = "provider-1/ax-4.0";
+      botName = "SteveAI-Korean";
+      break;
+    case 'general': 
+      model = "provider-3/glm-4.5-free"; 
+      botName = "SteveAI-general";
+      break;
+    case 'coding':
+      model = "provider-1/deepseek-v3-0324";
+      botName = "SteveAI-coding";
+      break;
+    case 'arabic':
+      model = "provider-1/allam-7b-instruct-preview";
+      botName = "SteveAI-Arabic";
+      break;
+    case 'reasoning': 
       model = "provider-1/deepseek-r1-0528";
       botName = "SteveAI-reasoning";
       break;
-    case 'general': 
+    case 'fast': 
       model = "provider-2/gemini-2.5-flash"; 
       botName = "SteveAI-fast";
       break;
-    case 'chat':
+    case 'chat': 
     default:
       model = "provider-5/gpt-5-nano";
       botName = "SteveAI-chat";
