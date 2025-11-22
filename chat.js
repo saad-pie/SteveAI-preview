@@ -336,7 +336,7 @@ function showAbout() {
 🤖 **About SteveAI**
 Built by *saadpie* — the bot from the future.
 
-- Models: GPT-5-Nano, DeepSeek-R1-Distill, Gemini-2.5-Flash, ${IMAGE_MODELS.map(m => m.name).join(', ')}
+- Models: GPT-5-Nano, DeepSeek-R1, Gemini-2.5-Flash, ${IMAGE_MODELS.map(m => m.name).join(', ')}
 - Modes: Chat | Reasoning | Fast
 - Features: Context memory, Summarization, Commands, Theme toggle, Speech, Export
 
@@ -345,8 +345,8 @@ _Type /help to explore commands._
   addMessage(text, 'bot');
 }
 function changeMode(arg) {
-  if (!arg || !['chat', 'reasoning', 'general'].includes(arg.toLowerCase())) {
-    addMessage('⚙️ Usage: /mode chat | reasoning | general', 'bot');
+  if (!arg || !['chat', 'reasoning', 'fast'].includes(arg.toLowerCase())) {
+    addMessage('⚙️ Usage: /mode chat | reasoning | fast', 'bot');
     return;
   }
   if (modeSelect) modeSelect.value = arg.toLowerCase();
@@ -371,7 +371,7 @@ function showHelp() {
 - /contact — Show contact info
 - /play — Summarize / replay conversation
 - /about — About SteveAI
-- /mode <chat|reasoning|general> — Change mode
+- /mode <chat|reasoning|fast> — Change mode
 - /time — Show local time
   `;
   addMessage(helpText, 'bot');
@@ -483,7 +483,7 @@ async function getChatReply(msg) {
 
   switch (mode) {
     case 'reasoning':
-      model = "provider-2/deepseek-r1-distill-qwen-1.5b";
+      model = "provider-1/deepseek-r1-0528";
       botName = "SteveAI-reasoning";
       break;
     case 'general': 
