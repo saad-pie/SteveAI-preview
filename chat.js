@@ -109,7 +109,7 @@ function parseThinkingResponse(text) {
     return { answer: text, thinking: null };
 }
 
-// --- UI: Add Messages ---
+// --- UI: Add Messages (FIXED) ---
 function addMessage(text, sender) {
   const container = document.createElement('div');
   container.className = 'message-container ' + sender;
@@ -125,22 +125,19 @@ function addMessage(text, sender) {
   // Parse the thinking step and the final answer
   const { answer, thinking } = parseThinkingResponse(text);
   
-  // Combine thinking and answer into the final HTML content
-  let fullHTML = "";
-  if (thinking) {
-      fullHTML += `
-          <details class="thinking-details">
-              <summary>🧠 **Reasoning/Steps**</summary>
-              <div class="thinking-content">
-                  ${markdownToHTML(thinking)}
-              </div>
-          </details>
-          <hr class="thinking-divider">
-          ${markdownToHTML(answer)}
-      `;
-  } else {
-      fullHTML = markdownToHTML(answer);
-  }
+  // --- GENERATE HTML SNIPPETS ---
+  // Default (Collapsed) HTML for the final output
+  const thinkingHTML = thinking ? `
+    <details class="thinking-details">
+        <summary>🧠 **Reasoning/Steps**</summary>
+        <div class="thinking-content">
+            ${markdownToHTML(thinking)}
+        </div>
+    </details>
+    <hr class="thinking-divider">
+  ` : '';
+
+  const finalFullHTML = thinkingHTML + markdownToHTML(answer);
 
 
   if (sender === 'bot') {
@@ -148,41 +145,41 @@ function addMessage(text, sender) {
     chat.scrollTop = chat.scrollHeight;
 
     let i = 0, buf = "";
-    // If thinking content exists, we skip the typing effect for the thinking part 
-    // and apply the effect only to the main answer for visual clarity.
-    
     const contentToType = thinking ? answer : text;
-    let typedBuf = thinking ? fullHTML.substring(0, fullHTML.indexOf('<hr class="thinking-divider">') + 27) + markdownToHTML(buf) : markdownToHTML(buf);
 
     (function type() {
       if (i < contentToType.length) {
         buf += contentToType[i++];
         
-        // Rebuild HTML, ensuring the thinking section is always present if it exists
+        let tempHtml;
         if (thinking) {
-             let tempHtml = `<details class="thinking-details" open>
-                                <summary>🧠 **Reasoning/Steps**</summary>
-                                <div class="thinking-content">
-                                    ${markdownToHTML(thinking)}
-                                </div>
-                            </details>
-                            <hr class="thinking-divider">
-                            ${markdownToHTML(buf)}`;
-             content.innerHTML = tempHtml;
+             // While typing, keep the details section OPEN so the user sees the reasoning load.
+             let openThinkingHTML = `
+                <details class="thinking-details" open>
+                    <summary>🧠 **Reasoning/Steps**</summary>
+                    <div class="thinking-content">
+                        ${markdownToHTML(thinking)}
+                    </div>
+                </details>
+                <hr class="thinking-divider">
+             `;
+             tempHtml = openThinkingHTML + markdownToHTML(buf);
         } else {
-             content.innerHTML = markdownToHTML(buf);
+             tempHtml = markdownToHTML(buf);
         }
-
+        
+        content.innerHTML = tempHtml;
         chat.scrollTop = chat.scrollHeight;
         setTimeout(type, TYPE_DELAY);
       } else {
-        content.innerHTML = fullHTML; // Set final HTML once typing is done
-        addBotActions(container, bubble, text); // Pass original text for copy
+        // --- FINAL STEP: Use the standard, default-collapsed HTML ---
+        content.innerHTML = finalFullHTML; 
+        addBotActions(container, bubble, text);
       }
     })();
   } else {
     // User messages are instant
-    content.innerHTML = fullHTML; 
+    content.innerHTML = markdownToHTML(text); 
     chat.appendChild(container);
     chat.scrollTop = chat.scrollHeight;
     addUserActions(container, bubble, text);
@@ -470,6 +467,7 @@ async function getChatReply(msg) {
   const payload = {
     model,
     messages: [
+      // Crucial Instruction: Tell the model to use the <think> tags.
       { role: "system", content: `You are ${botName}, made by saadpie. You should always output your reasoning steps inside <think> tags, followed by the final answer. The user has asked: ${msg}` },
       { role: "user", content: `${context}\n\nUser: ${msg}` }
     ]
