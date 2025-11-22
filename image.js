@@ -27,6 +27,3 @@ async function generateImage(prompt) {
     throw err;
   }
 }
-
-// make available to image.html also
-window.generateImage = generateImage;
