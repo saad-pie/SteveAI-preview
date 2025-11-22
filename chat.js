@@ -119,17 +119,22 @@ function parseThinkingResponse(text) {
 
 /**
  * Parses the answer for the specific image generation command pattern.
- * Pattern: "Image Generated:$prompt , model used: model , number of images 1(always)"
- * FIXED: Regex now makes the colon (:) optional for robustness.
+ * FIXED: Regex is now highly robust to handle missing colons, extra spaces, and model formatting.
  * @param {string} text - The raw AI answer text (after thinking block removal, if any).
  * @returns {{prompt: string, model: string} | null}
  */
 function parseImageGenerationCommand(text) {
-    // Regex matches "Image Generated" followed by an optional colon (?:)
-    // ^\s* starts at the beginning with optional whitespace
-    const imgCommandRegex = /^\s*Image Generated:?(.*?),\s*model used:\s*(.*?),\s*number of images 1\(always\)$/i;
-    
-    const match = text.trim().match(imgCommandRegex);
+    // 1. Clean the text aggressively: Remove newlines, bolding (**), the reasoning emoji (🧠), and the header text before attempting the precise regex match.
+    let cleanText = text.trim()
+        .replace(/\n/g, ' ') // Replace newlines with spaces
+        .replace(/(\*\*|🧠|Reasoning\/Steps)/gi, '') // Remove bolding, emoji, and header text
+        .trim();
+
+    // 2. The Regex: Looks for "Image Generated" followed by an optional colon/space, then captures the prompt (Group 1), then captures the model (Group 2), then checks for the end phrase.
+    // The \s* (zero or more whitespace) makes it robust against inconsistent spacing.
+    const imgCommandRegex = /^\s*Image Generated\s*:?\s*(.*?)\s*,\s*model used:\s*(.*?)\s*,\s*number of images 1\(always\)\s*$/i;
+
+    const match = cleanText.match(imgCommandRegex);
     
     if (match) {
         // Group 1: Prompt. Group 2: Model Name.
