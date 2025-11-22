@@ -229,13 +229,15 @@ async function playSummary() {
   if (!memorySummary) memorySummary = await generateSummary();
   addMessage(`🧠 **Chat Summary:**\n${memorySummary}`, 'bot');
 }
+
+// --- FIX: Updated model names in /about
 function showAbout() {
   const text = `
 🤖 **About SteveAI**
 Built by *saadpie* — the bot from the future.
 
-- Models: GPT-5-Nano, DeepSeek-V3, ${IMAGE_MODELS.map(m => m.name).join(', ')}
-- Modes: Chat | Reasoning | General
+- Models: GPT-5-Nano, DeepSeek-R1-Distill, Gemini-2.5-Flash, ${IMAGE_MODELS.map(m => m.name).join(', ')}
+- Modes: Chat | Reasoning | Fast
 - Features: Context memory, Summarization, Commands, Theme toggle, Speech, Export
 
 _Type /help to explore commands._
@@ -243,7 +245,7 @@ _Type /help to explore commands._
   addMessage(text, 'bot');
 }
 
-// --- FIX: Include 'general' mode in allowed options ---
+// --- FIX: Include 'general' mode in allowed options (unchanged but correct) ---
 function changeMode(arg) {
   if (!arg || !['chat', 'reasoning', 'general'].includes(arg.toLowerCase())) {
     addMessage('⚙️ Usage: /mode chat | reasoning | general', 'bot');
@@ -374,7 +376,7 @@ ${imageHTML}
 }
 
 // --- Chat Flow ---
-// --- FIX: Logic updated to map the new 'general' mode to a model ---
+// --- FIX: Logic updated to map models and bot names exactly as per user's latest structure ---
 async function getChatReply(msg) {
   const context = await buildContext();
   const mode = (modeSelect?.value || 'chat').toLowerCase();
@@ -389,7 +391,7 @@ async function getChatReply(msg) {
       break;
     case 'general': 
       model = "provider-2/gemini-2.5-flash"; 
-      botName = "SteveAI-fast";
+      botName = "SteveAI-fast"; // Synchronized with HTML
       break;
     case 'chat':
     default:
@@ -444,4 +446,3 @@ themeToggle.onclick = () => toggleTheme();
 
 // --- Clear Chat (Unchanged) ---
 clearChatBtn.onclick = () => clearChat();
-    
