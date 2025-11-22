@@ -193,11 +193,23 @@ function addMessage(text, sender) {
     // Record memory first, including the command text
     memory[++turn] = { user: input.value.trim(), bot: text };
 
-    // Execute the image generation command via handleCommand
-    const modelId = IMAGE_MODELS.find(m => m.name.toLowerCase() === imageCommand.model.toLowerCase())?.id || IMAGE_MODELS[5].id;
-    // We construct a command string that handleCommand can understand
-    const cmd = `/image ${imageCommand.prompt} ${modelId} 1`;
-    handleCommand(cmd); 
+    // --- FIX: Pass clean data to handleCommand directly ---
+    const cleanPrompt = imageCommand.prompt;
+    const cleanModelName = imageCommand.model; 
+
+    // Find the model ID using the clean model name
+    const modelObject = IMAGE_MODELS.find(m => m.name.toLowerCase() === cleanModelName.toLowerCase());
+    const modelId = modelObject ? modelObject.id : IMAGE_MODELS[5].id; // Fallback if not found
+
+    // Call handleCommand with an object containing pre-parsed image data
+    handleCommand({
+      type: 'image_auto',
+      prompt: cleanPrompt,
+      modelId: modelId,
+      numImages: 1 // AI always generates 1 image
+    }); 
+    // --- END FIX ---
+    
     return; // Exit as image generation handles its own output
   }
 
@@ -421,45 +433,70 @@ function showHelp() {
   addMessage(helpText, 'bot');
 }
 
-// --- Command Router (Unchanged from previous version) ---
-async function handleCommand(cmd) {
-  const parts = cmd.trim().split(' ');
-  const command = parts[0].toLowerCase();
-  const args = parts.slice(1);
+// --- Command Router (MODIFIED to accept direct image parameters) ---
+async function handleCommand(cmdOrParsedData) {
+  let command, prompt, model, numImages;
+  
+  if (typeof cmdOrParsedData === 'string') {
+    // This is a user-typed command like "/image my prompt model 1"
+    const parts = cmdOrParsedData.trim().split(' ');
+    command = parts[0].toLowerCase();
+    const args = parts.slice(1);
 
+    if (command === '/image') {
+      prompt = args.join(' ');
+      numImages = 1; // Default
+      model = IMAGE_MODELS[5].id; // Default to Imagen 4 ID
+
+      // Parse numImages from end if present
+      const lastArg = args[args.length - 1];
+      if (!isNaN(parseInt(lastArg, 10)) && parseInt(lastArg, 10) > 0) {
+        numImages = Math.min(4, parseInt(lastArg, 10));
+        prompt = args.slice(0, -1).join(' '); 
+      }
+      
+      // Parse model from prompt string if present (Fuzzy model detection for user input)
+      const modelMatch = IMAGE_MODELS.find(m => prompt.toLowerCase().includes(m.name.toLowerCase()));
+      if (modelMatch) {
+          model = modelMatch.id;
+          // IMPORTANT: Remove only the model *name* from the prompt, not the ID path
+          const nameRegex = new RegExp(modelMatch.name.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'gi');
+          prompt = prompt.replace(nameRegex, '').trim();
+      }
+    }
+  } else if (typeof cmdOrParsedData === 'object' && cmdOrParsedData.type === 'image_auto') {
+    // This is an AI-generated image command, data is pre-parsed
+    command = '/image';
+    prompt = cmdOrParsedData.prompt;
+    model = cmdOrParsedData.modelId; // This is the actual model ID (e.g., provider-4/sdxl-turbo)
+    numImages = cmdOrParsedData.numImages; 
+  } else {
+    // Handle other commands (clear, help, etc.)
+    const parts = cmdOrParsedData.trim().split(' ');
+    command = parts[0].toLowerCase();
+  }
+
+
+  // --- BEGIN COMMON COMMAND LOGIC ---
   switch (command) {
     case '/clear': return clearChat();
     case '/theme': return toggleTheme();
     case '/help': return showHelp();
+    case '/export': return exportChat();
+    case '/contact': return showContact();
+    case '/play': return playSummary();
+    case '/about': return showAbout();
+    case '/mode': return changeMode(cmdOrParsedData.trim().split(' ')[1]); // Special case for mode
+    case '/time': return showTime();
 
     case '/image': {
-      // 1. Parse arguments: /image <prompt> [model] [n=1]
-      let prompt = args.join(' ');
-      let numImages = 1;
-      let model = IMAGE_MODELS[5].id; // Default to Imagen 4
-
-      // Look for a number at the end (e.g., "dragon 3")
-      const lastArg = args[args.length - 1];
-      if (!isNaN(parseInt(lastArg, 10)) && parseInt(lastArg, 10) > 0) {
-        numImages = Math.min(4, parseInt(lastArg, 10));
-        prompt = args.slice(0, -1).join(' '); // Remove number from prompt
-      }
-      
-      // Basic model detection (requires exact match, could be improved)
-      const modelMatch = IMAGE_MODELS.find(m => prompt.toLowerCase().includes(m.id.split('/').pop().toLowerCase()));
-      if (modelMatch) {
-          model = modelMatch.id;
-          // Simple removal of model name from prompt (for better results)
-          prompt = prompt.replace(new RegExp(model.split('/').pop(), 'gi'), '').trim();
-      }
-      
       if (!prompt) {
         addMessage('⚠️ Usage: /image <prompt> [model name snippet] [n=1-4]', 'bot');
         return;
       }
 
-      const modelName = IMAGE_MODELS.find(m => m.id === model)?.name || model.split('/').pop();
-      addMessage(`🎨 Generating **${numImages}** image(s) with **${modelName}** for: *${prompt}* ...`, 'bot');
+      const modelNameForDisplay = IMAGE_MODELS.find(m => m.id === model)?.name || model.split('/').pop();
+      addMessage(`🎨 Generating **${numImages}** image(s) with **${modelNameForDisplay}** for: *${prompt}* ...`, 'bot');
 
       try {
         const imageUrls = await generateImage(prompt, model, numImages);
@@ -474,7 +511,7 @@ async function handleCommand(cmd) {
 <figure style="margin:5px 0;">
     <img src="${url}" alt="AI Image ${index + 1}" style="max-width:90%;border-radius:10px;margin-top:10px;display:block;margin-left:auto;margin-right:auto;" />
     <figcaption style="font-size:0.8em;text-align:center;">
-        🔗 <a href="${url}" target="_blank">${modelName} Image ${index + 1}</a>
+        🔗 <a href="${url}" target="_blank">${modelNameForDisplay} Image ${index + 1}</a>
     </figcaption>
 </figure>
             `;
@@ -507,12 +544,6 @@ ${imageHTML}
       return;
     }
 
-    case '/export': return exportChat();
-    case '/contact': return showContact();
-    case '/play': return playSummary();
-    case '/about': return showAbout();
-    case '/mode': return changeMode(args[0]);
-    case '/time': return showTime();
     default: return addMessage(`❓ Unknown command: ${command}`, 'bot');
   }
 }
