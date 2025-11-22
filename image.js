@@ -28,4 +28,4 @@ async function generateImage(prompt) {
   }
 }
 
-window.generateImage = generateImage()
+window.generateImage = generateImage;
