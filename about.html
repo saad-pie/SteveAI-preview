@@ -5,30 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>About SteveAI – SteveAI-General 2025 | Advanced AI Assistant</title>
 
-  <!-- SEO -->
   <meta name="description" content="Learn about SteveAI-General – the ultimate AI assistant of 2025, surpassing Grok 4 0709. Explore AI chat, reasoning, coding, image generation, and next-gen AI features.">
   <meta name="keywords" content="SteveAI, SteveAI-General, AI assistant, AI reasoning model, Grok 4 0709, AI chat, AI image generation, coding AI, advanced AI 2025, AI documentation, AI commands">
   <meta name="robots" content="index, follow">
   <meta name="author" content="Saadpie">
   <meta name="theme-color" content="#111">
 
-  <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
   <meta property="og:title" content="About SteveAI – SteveAI-General 2025">
   <meta property="og:description" content="SteveAI-General surpasses Grok 4 0709 with insane AI features: chat, coding, reasoning, image generation, and more.">
   <meta property="og:url" content="https://steve-ai.netlify.app/about.html">
   <meta property="og:image" content="https://steve-ai.netlify.app/assets/steveai-update-banner.png">
 
-  <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="About SteveAI – SteveAI-General 2025">
-  <meta name="twitter:description" content="Discover SteveAI-General, the next-level AI assistant of 2025, outperforming Grok 4 0709 in reasoning, coding, and creativity.">
-  <meta name="twitter:image" content="https://steve-ai.netlify.app/assets/steveai-update-banner.png">
+  <meta property="twitter:description" content="Discover SteveAI-General, the next-level AI assistant of 2025, outperforming Grok 4 0709 in reasoning, coding, and creativity.">
+  <meta property="twitter:image" content="https://steve-ai.netlify.app/assets/steveai-update-banner.png">
 
-  <!-- Canonical -->
   <link rel="canonical" href="https://steve-ai.netlify.app/about.html">
 
-  <!-- Structured Data -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -49,12 +44,153 @@
   }
   </script>
 
-  <!-- Stylesheet -->
   <link rel="stylesheet" href="style.css">
 
-  <!-- Favicon -->
   <link rel="icon" href="/assets/favicon.png">
-</head>
+
+  <style>
+    /* Global Reset & Base Styling */
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #0c0c0c; /* Deep Dark Background */
+      color: #e0e0e0; /* Light Gray Text */
+      line-height: 1.6;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    
+    /* Header Styling */
+    header {
+      background: #1a1a1a;
+      color: #fff;
+      padding: 1rem 2rem;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #00ffcc; /* Accent line */
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.8rem;
+      color: #00ffcc; /* Accent color for title */
+    }
+    nav a {
+      color: #e0e0e0;
+      text-decoration: none;
+      margin-left: 1.5rem;
+      padding: 0.5rem 0.8rem;
+      border-radius: 4px;
+      transition: background-color 0.2s, color 0.2s;
+    }
+    nav a:hover, nav a.active {
+      background-color: #2c2c2c;
+      color: #00ffcc;
+    }
+
+    /* Main Content Area */
+    main {
+      flex-grow: 1;
+      max-width: 1000px;
+      width: 90%;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+
+    /* Section Styling */
+    section {
+      background: #1a1a1a;
+      padding: 2rem;
+      border-radius: 12px;
+      margin-bottom: 2rem;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+    }
+    section h2 {
+      color: #00ffcc; /* Accent color for section headings */
+      border-bottom: 1px solid #333;
+      padding-bottom: 0.5rem;
+      margin-top: 0;
+      font-size: 1.5rem;
+    }
+    section p {
+        /* Add some padding for text readability */
+        padding-bottom: 0.5rem;
+    }
+
+    /* Update Banner Specific Styles */
+    .update-banner {
+      background: linear-gradient(135deg, #1b1b1b, #333); /* Gradient background */
+      border: 2px solid #00ffcc;
+      text-shadow: 0 0 5px rgba(0, 255, 204, 0.5);
+    }
+    .update-banner strong {
+      color: #fff;
+      font-weight: 700;
+    }
+    .update-banner ul {
+      list-style: none;
+      padding-left: 0;
+      margin-top: 1rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 10px;
+    }
+    .update-banner ul li {
+      background: #2c2c2c;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      border-left: 3px solid #00ffcc;
+    }
+
+    /* General List and Link Styling */
+    ul, ol {
+      padding-left: 20px;
+    }
+    ul li, ol li {
+      margin-bottom: 0.8rem;
+    }
+    /* Specific styling for the "Why SteveAI?" list for visual punch */
+    section:nth-of-type(3) ul li {
+        list-style: none;
+        background-color: #252525;
+        padding: 1rem;
+        border-left: 5px solid #00ffcc;
+        border-radius: 8px;
+        transition: transform 0.2s;
+    }
+    section:nth-of-type(3) ul li:hover {
+        transform: translateX(5px);
+        background-color: #303030;
+    }
+
+    a {
+      color: #00ffcc;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    a:hover {
+      color: #00e6b8;
+      text-decoration: underline;
+    }
+
+    /* Footer Styling */
+    footer {
+      background: #1a1a1a;
+      color: #777;
+      text-align: center;
+      padding: 1rem;
+      font-size: 0.9rem;
+      border-top: 1px solid #2c2c2c;
+    }
+    footer a {
+      color: #00ffcc;
+      font-weight: bold;
+    }
+  </style>
+  </head>
 
 <body>
   <header>
@@ -70,8 +206,7 @@
 
   <main>
 
-    <!-- Update Banner -->
-    <section class="update-banner" style="background:#1b1b1b; color:#00ffcc; padding:1.5rem; border-radius:8px; margin-bottom:2rem;">
+    <section class="update-banner">
       <h2>🚀 Major Update: <strong>SteveAI-General 2025</strong></h2>
       <p>
         SteveAI-General now surpasses <strong>Grok 4 0709</strong> in intelligence, speed, and creativity.  
@@ -86,7 +221,6 @@
       </ul>
     </section>
 
-    <!-- Mission -->
     <section>
       <h2>Our Mission</h2>
       <p>
@@ -95,7 +229,6 @@
       </p>
     </section>
 
-    <!-- Why SteveAI -->
     <section>
       <h2>Why SteveAI?</h2>
       <ul>
@@ -107,7 +240,6 @@
       </ul>
     </section>
 
-    <!-- How to Use -->
     <section>
       <h2>How to Use SteveAI</h2>
       <ol>
@@ -118,7 +250,6 @@
       </ol>
     </section>
 
-    <!-- Behind the Project -->
     <section>
       <h2>Behind the Project</h2>
       <p>
@@ -130,7 +261,6 @@
       </p>
     </section>
 
-    <!-- Explore More -->
     <section>
       <h2>Explore More</h2>
       <ul>
@@ -146,5 +276,4 @@
     <p>© 2025 <strong>SteveAI</strong> — Powered by <strong>SteveAI-General</strong> • Created with ❤️ by <a href="https://github.com/saad-pie" target="_blank">Saadpie</a> • Contact: <a href="mailto:saadabdulrehman2010@gmail.com">saadabdulrehman2010@gmail.com</a></p>
   </footer>
 </body>
-          </html>
-          
+</html>
