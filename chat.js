@@ -45,7 +45,7 @@ function shouldSummarize() {
 }
 
 /**
- * Generates a random delay for a more natural, fast typing effect (1ms to 10ms).
+ * Generates a random delay for a more natural, fast typing effect (1ms to 2ms).
  * @returns {number} Random delay in milliseconds.
  */
 function getRandomTypingDelay() {
@@ -119,20 +119,24 @@ function parseThinkingResponse(text) {
 
 /**
  * Parses the answer for the specific image generation command pattern.
- * Pattern: "**Image Generated**:$prompt , model used: model , number of images 1(always)"
+ * Pattern: "Image Generated:$prompt , model used: model , number of images 1(always)"
+ * FIXED: Regex simplified to strictly look for the un-bolded command phrase.
  * @param {string} text - The raw AI answer text (after thinking block removal, if any).
  * @returns {{prompt: string, model: string} | null}
  */
 function parseImageGenerationCommand(text) {
-    // This regex handles optional markdown bolding (**), case-insensitivity, and leading/trailing spaces.
-    const imgCommandRegex = /\s*(\*\*?\s*Image Generated\s*\*\*?)\s*:\s*(.*?)\s*,\s*model used:\s*(.*?)\s*,\s*number of images 1\(always\)$/i;
+    // Simplified regex to only match "Image Generated:" without bolding.
+    // Group 1: Prompt. Group 2: Model Name.
+    const imgCommandRegex = /^Image Generated:(.*?), model used: (.*?), number of images 1\(always\)$/i;
     
     const match = text.trim().match(imgCommandRegex);
     
     if (match) {
+        // The original parser logic assumed capture groups from the complex regex.
+        // With the simplified regex, the prompt is group 1, and model is group 2.
         return {
-            prompt: match[2].trim(), // Prompt is in the 3rd capture group of the full match (index 2)
-            model: match[3].trim()  // Model is in the 4th capture group of the full match (index 3)
+            prompt: match[1].trim(), 
+            model: match[2].trim()  
         };
     }
     return null;
@@ -514,8 +518,8 @@ async function getChatReply(msg) {
   const systemPrompt = `You are ${botName}, made by saadpie. 
   
   1. **Reasoning:** You must always output your reasoning steps inside <think> tags, followed by the final answer.
-  2. **Image Generation:** If the user asks you to *generate*, *create*, or *show* an image, you must reply with *only* the following pattern (do not add any other text outside this pattern, not even thinking steps): 
-     **Image Generated:$prompt , model used: model name , number of images 1(always)**
+  2. **Image Generation:** If the user asks you to *generate*, *create*, or *show* an image, you must reply with *only* the following exact pattern (do not add any other text or markdown formatting outside this pattern, not even thinking steps): 
+     Image Generated:$prompt , model used: model name , number of images 1(always)
      Available image models: ${imageModelNames}. Use the most relevant model name in your response.
   
   The user has asked: ${msg}`;
