@@ -81,7 +81,35 @@ async function buildContext() {
 // --- Markdown Parser ---
 function markdownToHTML(t) { return marked.parse(t || ""); }
 
-// --- UI: Add Messages (Logic is unchanged, kept for completeness) ---
+/**
+ * Parses the response for <think> tags and separates the thinking steps from the final answer.
+ * @param {string} text - The raw AI response.
+ * @returns {{answer: string, thinking: string}}
+ */
+function parseThinkingResponse(text) {
+    const thinkingRegex = /<think>(.*?)<\/think>/gs;
+    const match = thinkingRegex.exec(text);
+
+    if (match) {
+        // Content inside <think> tags
+        const thinking = match[1].trim(); 
+        
+        // Everything else is the answer (remove the matched tag block)
+        let answer = text.replace(thinkingRegex, '').trim(); 
+        
+        // Handle case where only the thinking block was returned or the answer is empty
+        if (!answer && thinking) {
+            answer = "The model produced a thinking step but no explicit final answer.";
+        }
+
+        return { answer, thinking };
+    }
+    
+    // If no <think> tag found, return the whole text as the answer
+    return { answer: text, thinking: null };
+}
+
+// --- UI: Add Messages ---
 function addMessage(text, sender) {
   const container = document.createElement('div');
   container.className = 'message-container ' + sender;
@@ -94,24 +122,67 @@ function addMessage(text, sender) {
   content.className = 'bubble-content';
   bubble.appendChild(content);
 
+  // Parse the thinking step and the final answer
+  const { answer, thinking } = parseThinkingResponse(text);
+  
+  // Combine thinking and answer into the final HTML content
+  let fullHTML = "";
+  if (thinking) {
+      fullHTML += `
+          <details class="thinking-details">
+              <summary>🧠 **Reasoning/Steps**</summary>
+              <div class="thinking-content">
+                  ${markdownToHTML(thinking)}
+              </div>
+          </details>
+          <hr class="thinking-divider">
+          ${markdownToHTML(answer)}
+      `;
+  } else {
+      fullHTML = markdownToHTML(answer);
+  }
+
+
   if (sender === 'bot') {
     chat.appendChild(container);
     chat.scrollTop = chat.scrollHeight;
 
     let i = 0, buf = "";
+    // If thinking content exists, we skip the typing effect for the thinking part 
+    // and apply the effect only to the main answer for visual clarity.
+    
+    const contentToType = thinking ? answer : text;
+    let typedBuf = thinking ? fullHTML.substring(0, fullHTML.indexOf('<hr class="thinking-divider">') + 27) + markdownToHTML(buf) : markdownToHTML(buf);
+
     (function type() {
-      if (i < text.length) {
-        buf += text[i++];
-        content.innerHTML = markdownToHTML(buf);
+      if (i < contentToType.length) {
+        buf += contentToType[i++];
+        
+        // Rebuild HTML, ensuring the thinking section is always present if it exists
+        if (thinking) {
+             let tempHtml = `<details class="thinking-details" open>
+                                <summary>🧠 **Reasoning/Steps**</summary>
+                                <div class="thinking-content">
+                                    ${markdownToHTML(thinking)}
+                                </div>
+                            </details>
+                            <hr class="thinking-divider">
+                            ${markdownToHTML(buf)}`;
+             content.innerHTML = tempHtml;
+        } else {
+             content.innerHTML = markdownToHTML(buf);
+        }
+
         chat.scrollTop = chat.scrollHeight;
         setTimeout(type, TYPE_DELAY);
       } else {
-        content.innerHTML = markdownToHTML(text);
-        addBotActions(container, bubble, text);
+        content.innerHTML = fullHTML; // Set final HTML once typing is done
+        addBotActions(container, bubble, text); // Pass original text for copy
       }
     })();
   } else {
-    content.innerHTML = markdownToHTML(text);
+    // User messages are instant
+    content.innerHTML = fullHTML; 
     chat.appendChild(container);
     chat.scrollTop = chat.scrollHeight;
     addUserActions(container, bubble, text);
@@ -149,14 +220,17 @@ function addBotActions(container, bubble, text) {
   copy.className = 'action-btn';
   copy.textContent = '📋';
   copy.title = 'Copy';
-  copy.onclick = () => navigator.clipboard.writeText(text);
+  // FIX: Pass the original, unparsed text for accurate copying
+  copy.onclick = () => navigator.clipboard.writeText(text); 
 
   const speak = document.createElement('button');
   speak.className = 'action-btn';
   speak.textContent = '🔊';
   speak.title = 'Speak';
+  // FIX: Pass only the ANSWER content for speaking
+  const { answer } = parseThinkingResponse(text);
   speak.onclick = () => {
-    let u = new SpeechSynthesisUtterance(text);
+    let u = new SpeechSynthesisUtterance(answer);
     speechSynthesis.speak(u);
   };
 
@@ -191,8 +265,6 @@ async function fetchAI(payload) {
 }
 
 // --- Commands ---
-// ... (The rest of the command functions remain largely unchanged)
-
 function toggleTheme() {
   document.body.classList.toggle('light');
   addMessage('🌓 Theme toggled.', 'bot');
@@ -229,8 +301,6 @@ async function playSummary() {
   if (!memorySummary) memorySummary = await generateSummary();
   addMessage(`🧠 **Chat Summary:**\n${memorySummary}`, 'bot');
 }
-
-// --- FIX: Updated model names in /about
 function showAbout() {
   const text = `
 🤖 **About SteveAI**
@@ -244,8 +314,6 @@ _Type /help to explore commands._
   `;
   addMessage(text, 'bot');
 }
-
-// --- FIX: Include 'general' mode in allowed options (unchanged but correct) ---
 function changeMode(arg) {
   if (!arg || !['chat', 'reasoning', 'general'].includes(arg.toLowerCase())) {
     addMessage('⚙️ Usage: /mode chat | reasoning | general', 'bot');
@@ -376,7 +444,6 @@ ${imageHTML}
 }
 
 // --- Chat Flow ---
-// --- FIX: Logic updated to map models and bot names exactly as per user's latest structure ---
 async function getChatReply(msg) {
   const context = await buildContext();
   const mode = (modeSelect?.value || 'chat').toLowerCase();
@@ -391,7 +458,7 @@ async function getChatReply(msg) {
       break;
     case 'general': 
       model = "provider-2/gemini-2.5-flash"; 
-      botName = "SteveAI-fast"; // Synchronized with HTML
+      botName = "SteveAI-fast";
       break;
     case 'chat':
     default:
@@ -403,7 +470,7 @@ async function getChatReply(msg) {
   const payload = {
     model,
     messages: [
-      { role: "system", content: `You are ${botName}, made by saadpie.` },
+      { role: "system", content: `You are ${botName}, made by saadpie. You should always output your reasoning steps inside <think> tags, followed by the final answer. The user has asked: ${msg}` },
       { role: "user", content: `${context}\n\nUser: ${msg}` }
     ]
   };
@@ -446,3 +513,4 @@ themeToggle.onclick = () => toggleTheme();
 
 // --- Clear Chat (Unchanged) ---
 clearChatBtn.onclick = () => clearChat();
+    
