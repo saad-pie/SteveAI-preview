@@ -118,43 +118,57 @@ function parseThinkingResponse(text) {
 }
 
 /**
- * Parses the answer for the specific image generation command pattern.
- * FINAL FIXED: Uses a strict 'startsWith' check on cleaned text, followed by flexible regex extraction.
+ * Parses the answer for the specific image generation command pattern using the simplified format.
+ * NEW: Uses split and substring operations based on the strict format: "Image Generated:model:name,prompt:text"
  * @param {string} text - The raw AI answer text.
  * @returns {{prompt: string, model: string} | null}
  */
 function parseImageGenerationCommand(text) {
-    // 1. Aggressive Cleanup: Remove newlines, bolding (**), reasoning headers, and trim.
+    const commandStart = "Image Generated:";
+    
+    // Aggressive Cleanup: Remove control chars, newlines, and formatting, then trim.
     let cleanText = text.trim()
         .replace(/\n/g, ' ') 
         .replace(/(\*\*|🧠|Reasoning\/Steps)/gi, '')
+        .replace(/[\u0000-\u001F\u007F-\u009F]/g, "") 
         .trim();
 
-    const commandStart = "Image Generated:";
-    
-    // 2. QUICK CHECK (startsWith concept): Check if the cleaned text starts with the command phrase, 
-    // tolerating an optional colon and space immediately following it.
-    if (!cleanText.toLowerCase().startsWith(commandStart.toLowerCase().replace(':', '')) &&
-        !cleanText.toLowerCase().startsWith(commandStart.toLowerCase())) {
+    // 1. Check if the text starts with the exact command identifier (case-insensitive)
+    if (!cleanText.toLowerCase().startsWith(commandStart.toLowerCase())) {
         return null;
     }
     
-    // 3. EXTRACTION: The command is confirmed to be present at the start. Use the most robust regex
-    // to capture the prompt (G1) and model (G2), tolerating any remaining spaces/colons.
-    const imgCommandRegex = /^\s*Image Generated\s*:?\s*(.*?)\s*,\s*model used:\s*(.*?)\s*,\s*number of images 1\(always\)\s*$/i;
-
-    const match = cleanText.match(imgCommandRegex);
+    // 2. Extract the content after "Image Generated:"
+    let content = cleanText.substring(commandStart.length).trim();
     
-    if (match) {
-        // Group 1: Prompt. Group 2: Model Name.
-        return {
-            prompt: match[1].trim(), 
-            model: match[2].trim()  
-        };
+    // 3. Look for the required format: "model:name,prompt:text"
+    // Find the separator
+    const commaIndex = content.indexOf(',');
+    if (commaIndex === -1) {
+        return null; // Format error: no comma separator found
     }
     
-    // Fallback if startsWith passed but the command was malformed (e.g., cut off).
-    return null;
+    const modelSegment = content.substring(0, commaIndex).trim();
+    const promptSegment = content.substring(commaIndex + 1).trim();
+
+    // 4. Extract model name
+    if (!modelSegment.toLowerCase().startsWith('model:')) {
+        return null; // Format error: model key not found
+    }
+    const model = modelSegment.substring('model:'.length).trim();
+
+    // 5. Extract prompt text
+    if (!promptSegment.toLowerCase().startsWith('prompt:')) {
+        return null; // Format error: prompt key not found
+    }
+    const prompt = promptSegment.substring('prompt:'.length).trim();
+
+    if (!model || !prompt) {
+        return null; // Extraction failed or parts are empty
+    }
+
+    // Success!
+    return { prompt, model };
 }
 
 // --- UI: Add Messages (FIXED to handle image generation command and random typing speed) ---
@@ -534,7 +548,7 @@ async function getChatReply(msg) {
   
   1. **Reasoning:** You must always output your reasoning steps inside <think> tags, followed by the final answer, UNLESS an image is being generated.
   2. **Image Generation:** If the user asks you to *generate*, *create*, or *show* an image, you must reply with **ONLY** the following exact pattern. **DO NOT add any greetings, explanations, emojis, periods, newlines, or follow-up text whatsoever.** Your output must be the single, raw command string: 
-     Image Generated:$prompt , model used: model name , number of images 1(always)
+     Image Generated:model:model name,prompt:prompt text
      Available image models: ${imageModelNames}. Use the most relevant model name in your response.
   
   The user has asked: ${msg}`;
