@@ -1,3 +1,6 @@
+import { API_BASE, API_KEYS, proxiedURL } from './config.js';
+
+
 // --- DOM Elements ---
 
 const chat = document.getElementById('chat');
