@@ -109,7 +109,26 @@ function parseThinkingResponse(text) {
     return { answer: text, thinking: null };
 }
 
-// --- UI: Add Messages (FIXED) ---
+/**
+ * Parses the answer for the specific image generation command pattern.
+ * Pattern: "Image Generated:$prompt , model used: model , number of images 1(always)"
+ * @param {string} text - The raw AI answer text (after thinking block removal, if any).
+ * @returns {{prompt: string, model: string} | null}
+ */
+function parseImageGenerationCommand(text) {
+    const imgCommandRegex = /^Image Generated:(.*?), model used: (.*?), number of images 1\(always\)$/i;
+    const match = text.trim().match(imgCommandRegex);
+    
+    if (match) {
+        return {
+            prompt: match[1].trim(),
+            model: match[2].trim()
+        };
+    }
+    return null;
+}
+
+// --- UI: Add Messages (FIXED to handle image generation command) ---
 function addMessage(text, sender) {
   const container = document.createElement('div');
   container.className = 'message-container ' + sender;
@@ -124,8 +143,22 @@ function addMessage(text, sender) {
 
   // Parse the thinking step and the final answer
   const { answer, thinking } = parseThinkingResponse(text);
+  const imageCommand = parseImageGenerationCommand(answer);
   
-  // --- GENERATE HTML SNIPPETS ---
+  // If this is an image command, we need to bypass normal message display
+  if (sender === 'bot' && imageCommand) {
+    // Record memory first, including the command text
+    memory[++turn] = { user: input.value.trim(), bot: text };
+
+    // Execute the image generation command via handleCommand
+    const modelId = IMAGE_MODELS.find(m => m.name.toLowerCase() === imageCommand.model.toLowerCase())?.id || IMAGE_MODELS[5].id;
+    // We construct a command string that handleCommand can understand
+    const cmd = `/image ${imageCommand.prompt} ${modelId} 1`;
+    handleCommand(cmd); 
+    return; // Exit as image generation handles its own output
+  }
+
+  // --- STANDARD MESSAGE FLOW ---
   // Default (Collapsed) HTML for the final output
   const thinkingHTML = thinking ? `
     <details class="thinking-details">
@@ -217,14 +250,14 @@ function addBotActions(container, bubble, text) {
   copy.className = 'action-btn';
   copy.textContent = '📋';
   copy.title = 'Copy';
-  // FIX: Pass the original, unparsed text for accurate copying
+  // Pass the original, unparsed text for accurate copying
   copy.onclick = () => navigator.clipboard.writeText(text); 
 
   const speak = document.createElement('button');
   speak.className = 'action-btn';
   speak.textContent = '🔊';
   speak.title = 'Speak';
-  // FIX: Pass only the ANSWER content for speaking
+  // Pass only the ANSWER content for speaking
   const { answer } = parseThinkingResponse(text);
   speak.onclick = () => {
     let u = new SpeechSynthesisUtterance(answer);
@@ -261,7 +294,7 @@ async function fetchAI(payload) {
   throw new Error(lastErrText || "API error");
 }
 
-// --- Commands ---
+// --- Commands (Unchanged) ---
 function toggleTheme() {
   document.body.classList.toggle('light');
   addMessage('🌓 Theme toggled.', 'bot');
@@ -440,7 +473,7 @@ ${imageHTML}
   }
 }
 
-// --- Chat Flow ---
+// --- Chat Flow (UPDATED System Prompt) ---
 async function getChatReply(msg) {
   const context = await buildContext();
   const mode = (modeSelect?.value || 'chat').toLowerCase();
@@ -463,12 +496,23 @@ async function getChatReply(msg) {
       botName = "SteveAI-chat";
       break;
   }
+  
+  // Get image model names for the prompt
+  const imageModelNames = IMAGE_MODELS.map(m => m.name).join(', ');
+
+  const systemPrompt = `You are ${botName}, made by saadpie. 
+  
+  1. **Reasoning:** You must always output your reasoning steps inside <think> tags, followed by the final answer.
+  2. **Image Generation:** If the user asks you to *generate*, *create*, or *show* an image, you must reply with *only* the following pattern (do not add any other text outside this pattern, not even thinking steps): 
+     **Image Generated:$prompt , model used: model name , number of images 1(always)**
+     Available image models: ${imageModelNames}. Use the most relevant model name in your response.
+  
+  The user has asked: ${msg}`;
 
   const payload = {
     model,
     messages: [
-      // Crucial Instruction: Tell the model to use the <think> tags.
-      { role: "system", content: `You are ${botName}, made by saadpie. You should always output your reasoning steps inside <think> tags, followed by the final answer. The user has asked: ${msg}` },
+      { role: "system", content: systemPrompt },
       { role: "user", content: `${context}\n\nUser: ${msg}` }
     ]
   };
@@ -511,4 +555,3 @@ themeToggle.onclick = () => toggleTheme();
 
 // --- Clear Chat (Unchanged) ---
 clearChatBtn.onclick = () => clearChat();
-    
