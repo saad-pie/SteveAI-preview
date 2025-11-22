@@ -23,7 +23,7 @@ const modeSelect = document.getElementById('modeSelect');
 let memory = {};
 let turn = 0;
 let memorySummary = "";
-const TYPE_DELAY = 2;
+// REMOVED: const TYPE_DELAY = 2;
 const TOKEN_BUDGET = 2200;
 const approxTokens = s => Math.ceil((s || "").length / 4);
 
@@ -42,6 +42,14 @@ function lastTurns(n = 6) {
 function shouldSummarize() {
   if (memorySummary) return false;
   return turn >= 6 || approxTokens(memoryString()) > TOKEN_BUDGET;
+}
+
+/**
+ * Generates a random delay for a more natural typing effect (5ms to 50ms).
+ * @returns {number} Random delay in milliseconds.
+ */
+function getRandomTypingDelay() {
+    return Math.floor(Math.random() * (50 - 5 + 1)) + 5;
 }
 
 // --- Summarization ---
@@ -111,24 +119,31 @@ function parseThinkingResponse(text) {
 
 /**
  * Parses the answer for the specific image generation command pattern.
- * Pattern: "Image Generated:$prompt , model used: model , number of images 1(always)"
+ * Pattern: "**Image Generated**:$prompt , model used: model , number of images 1(always)"
+ * FIXED: Regex is made robust to handle bolding and whitespace around the main command.
  * @param {string} text - The raw AI answer text (after thinking block removal, if any).
  * @returns {{prompt: string, model: string} | null}
  */
 function parseImageGenerationCommand(text) {
-    const imgCommandRegex = /^Image Generated:(.*?), model used: (.*?), number of images 1\(always\)$/i;
+    // This regex handles optional markdown bolding (**), case-insensitivity, and leading/trailing spaces.
+    // (\*\*?\s*Image Generated\s*\*\*?)  <- Matches "Image Generated", "**Image Generated**", or "*Image Generated*" with optional spaces
+    // : (.*?)                          <- Captures the prompt (Group 1)
+    // \s*,\s*model used:\s*(.*?)       <- Captures the model name (Group 2)
+    // \s*,\s*number of images 1\(always\)$/i <- Matches the rest, case-insensitively
+    const imgCommandRegex = /\s*(\*\*?\s*Image Generated\s*\*\*?)\s*:\s*(.*?)\s*,\s*model used:\s*(.*?)\s*,\s*number of images 1\(always\)$/i;
+    
     const match = text.trim().match(imgCommandRegex);
     
     if (match) {
         return {
-            prompt: match[1].trim(),
-            model: match[2].trim()
+            prompt: match[2].trim(), // Prompt is in the 3rd capture group of the full match (index 2)
+            model: match[3].trim()  // Model is in the 4th capture group of the full match (index 3)
         };
     }
     return null;
 }
 
-// --- UI: Add Messages (FIXED to handle image generation command) ---
+// --- UI: Add Messages (FIXED to handle image generation command and random typing speed) ---
 function addMessage(text, sender) {
   const container = document.createElement('div');
   container.className = 'message-container ' + sender;
@@ -203,7 +218,8 @@ function addMessage(text, sender) {
         
         content.innerHTML = tempHtml;
         chat.scrollTop = chat.scrollHeight;
-        setTimeout(type, TYPE_DELAY);
+        // Use random delay for natural speed
+        setTimeout(type, getRandomTypingDelay());
       } else {
         // --- FINAL STEP: Use the standard, default-collapsed HTML ---
         content.innerHTML = finalFullHTML; 
@@ -555,3 +571,4 @@ themeToggle.onclick = () => toggleTheme();
 
 // --- Clear Chat (Unchanged) ---
 clearChatBtn.onclick = () => clearChat();
+          
