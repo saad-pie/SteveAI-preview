@@ -96,7 +96,7 @@
       resultDiv.innerHTML = "<p>Generating...</p>";
 
       try {
-        const imageUrl = await window.generateImage(prompt);
+        const imageUrl = await generateImage(prompt);
         if (!imageUrl) {
           resultDiv.innerHTML = `<p style="color:red;">Error: No image returned.</p>`;
           return;
