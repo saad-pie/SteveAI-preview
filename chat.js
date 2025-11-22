@@ -366,7 +366,7 @@ function showAbout() {
 🤖 **About SteveAI**
 Built by *saadpie* — the bot from the future.
 
-- Models: GPT-5-Nano, DeepSeek-R1, Gemini-2.5-Flash, ${IMAGE_MODELS.map(m => m.name).join(', ')}
+- Models: GPT-5-Nano, DeepSeek-R1, Gemini-2.5-flash, ${IMAGE_MODELS.map(m => m.name).join(', ')}
 - Modes: Chat | Reasoning | Fast
 - Features: Context memory, Summarization, Commands, Theme toggle, Speech, Export
 
@@ -533,7 +533,7 @@ async function getChatReply(msg) {
   const systemPrompt = `You are ${botName}, made by saadpie. 
   
   1. **Reasoning:** You must always output your reasoning steps inside <think> tags, followed by the final answer, UNLESS an image is being generated.
-  2. **Image Generation:** If the user asks you to *generate*, *create*, or *show* an image, you must reply with *only* the following exact pattern (do not add any extra text, reasoning, headers, emojis, or markdown/bolding outside this pattern): 
+  2. **Image Generation:** If the user asks you to *generate*, *create*, or *show* an image, you must reply with **ONLY** the following exact pattern. **DO NOT add any greetings, explanations, emojis, periods, newlines, or follow-up text whatsoever.** Your output must be the single, raw command string: 
      Image Generated:$prompt , model used: model name , number of images 1(always)
      Available image models: ${imageModelNames}. Use the most relevant model name in your response.
   
