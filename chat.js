@@ -49,7 +49,7 @@ function shouldSummarize() {
  * @returns {number} Random delay in milliseconds.
  */
 function getRandomTypingDelay() {
-    return Math.floor(Math.random() * (2 - 1 + 1)) + 1;
+    return Math.floor(Math.random() * (1 - 1 + 1)) + 1;
 }
 
 // --- Summarization ---
@@ -120,19 +120,19 @@ function parseThinkingResponse(text) {
 /**
  * Parses the answer for the specific image generation command pattern.
  * Pattern: "Image Generated:$prompt , model used: model , number of images 1(always)"
- * FIXED: Regex simplified to strictly look for the un-bolded command phrase.
+ * FIXED: Regex now makes the colon (:) optional for robustness.
  * @param {string} text - The raw AI answer text (after thinking block removal, if any).
  * @returns {{prompt: string, model: string} | null}
  */
 function parseImageGenerationCommand(text) {
-    // Simplified regex to only match "Image Generated:" without bolding.
-    // Group 1: Prompt. Group 2: Model Name.
-    const imgCommandRegex = /^Image Generated:(.*?), model used: (.*?), number of images 1\(always\)$/i;
+    // Regex matches "Image Generated" followed by an optional colon (?:)
+    // ^\s* starts at the beginning with optional whitespace
+    const imgCommandRegex = /^\s*Image Generated:?(.*?),\s*model used:\s*(.*?),\s*number of images 1\(always\)$/i;
     
     const match = text.trim().match(imgCommandRegex);
     
     if (match) {
-        // The simplified regex groups are 1 (prompt) and 2 (model)
+        // Group 1: Prompt. Group 2: Model Name.
         return {
             prompt: match[1].trim(), 
             model: match[2].trim()  
@@ -517,7 +517,7 @@ async function getChatReply(msg) {
   const systemPrompt = `You are ${botName}, made by saadpie. 
   
   1. **Reasoning:** You must always output your reasoning steps inside <think> tags, followed by the final answer, UNLESS an image is being generated.
-  2. **Image Generation:** If the user asks you to *generate*, *create*, or *show* an image, you must reply with *only* the following exact pattern (do not add any other text, reasoning, markdown, or wrappers outside this pattern): 
+  2. **Image Generation:** If the user asks you to *generate*, *create*, or *show* an image, you must reply with *only* the following exact pattern (do not add any extra text, reasoning, headers, emojis, or markdown/bolding outside this pattern): 
      Image Generated:$prompt , model used: model name , number of images 1(always)
      Available image models: ${imageModelNames}. Use the most relevant model name in your response.
   
