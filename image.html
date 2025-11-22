@@ -38,35 +38,59 @@
     main {
       padding: 2em;
     }
-    input, button {
+    .controls {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1em;
+    }
+    input, button, select {
       border: none;
       padding: 0.7em 1em;
       border-radius: 0.5em;
       font-size: 1em;
     }
     input {
-      width: 60%;
-      margin-bottom: 1em;
+      width: 80%;
       background: #222;
       color: #fff;
+    }
+    select {
+        width: 80%;
+        max-width: 300px;
+        background: #222;
+        color: #fff;
+        text-align: center;
     }
     button {
       background: #ffae00;
       color: #111;
       cursor: pointer;
       font-weight: 600;
+      width: 80%;
+      max-width: 300px;
     }
     button:hover {
       background: #ffc107;
     }
-    #result {
-        margin-top: 2em;
-        min-height: 100px;
-    }
     #result img {
+      margin-top: 2em;
       max-width: 90%;
       border-radius: 1em;
       box-shadow: 0 0 20px rgba(255, 174, 0, 0.3);
+    }
+    @media (min-width: 600px) {
+        .controls {
+            flex-direction: row;
+            justify-content: center;
+        }
+        input {
+            width: 40%;
+        }
+        select, button {
+            width: auto;
+            max-width: none;
+        }
     }
   </style>
 </head>
@@ -81,31 +105,57 @@
 
   <main>
     <h1>🖼️ SteveAI Image Generator</h1>
-    <p>Enter a prompt below to generate an AI image.</p>
-    <input type="text" id="prompt" placeholder="e.g. A cute baby sea otter" />
-    <br />
-    <button id="generateBtn">Generate</button>
+    <p>Enter a prompt and select your AI model.</p>
+    
+    <div class="controls">
+        <input type="text" id="prompt" placeholder="e.g. A cute baby sea otter" />
+        <select id="modelSelect"></select>
+        <button id="generateBtn">Generate</button>
+    </div>
+    
     <div id="result"></div>
   </main>
- 
-  <script type="module">
-    import { generateImage } from './image.js';
 
+  <script type="module">
+    // Import the function and the model list
+    import { generateImage, IMAGE_MODELS } from './image.js'; 
+    
     const generateBtn = document.getElementById("generateBtn");
     const promptInput = document.getElementById("prompt");
     const resultDiv = document.getElementById("result");
+    const modelSelect = document.getElementById("modelSelect");
+
+    // Function to populate the dropdown menu
+    function populateModelSelect() {
+        IMAGE_MODELS.forEach((model, index) => {
+            const option = document.createElement('option');
+            option.value = model.id;
+            option.textContent = model.name;
+            // Set the original Imagen 4 as selected by default
+            if (model.id === "provider-4/imagen-4") { 
+                option.selected = true;
+            }
+            modelSelect.appendChild(option);
+        });
+    }
+
+    populateModelSelect();
 
     generateBtn.addEventListener("click", async () => {
       const prompt = promptInput.value.trim();
+      // Get the selected model ID
+      const selectedModel = modelSelect.value; 
+
       if (!prompt) return alert("Please enter a prompt!");
 
-      resultDiv.innerHTML = "<p style='color:#aaa'>Generating... this may take a few seconds.</p>";
+      resultDiv.innerHTML = `<p style="color:#aaa">Generating image with **${modelSelect.options[modelSelect.selectedIndex].textContent}**...</p>`;
 
       try {
-        const imageUrl = await generateImage(prompt);
+        // Pass the selected model to the generation function
+        const imageUrl = await generateImage(prompt, selectedModel); 
         
         if (!imageUrl) {
-          resultDiv.innerHTML = `<p style="color:red;">Error: No image returned from API.</p>`;
+          resultDiv.innerHTML = `<p style="color:red;">Error: No image returned.</p>`;
           return;
         }
 
