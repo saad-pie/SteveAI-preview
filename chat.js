@@ -119,27 +119,28 @@ function parseThinkingResponse(text) {
 
 /**
  * Parses the answer for the specific image generation command pattern.
- * FIXED: Uses a simple 'includes' check first for robustness, then uses a flexible regex for extraction.
+ * FINAL FIXED: Uses a strict 'startsWith' check on cleaned text, followed by flexible regex extraction.
  * @param {string} text - The raw AI answer text.
  * @returns {{prompt: string, model: string} | null}
  */
 function parseImageGenerationCommand(text) {
-    const lowerText = text.toLowerCase();
+    // 1. Aggressive Cleanup: Remove newlines, bolding (**), reasoning headers, and trim.
+    let cleanText = text.trim()
+        .replace(/\n/g, ' ') 
+        .replace(/(\*\*|🧠|Reasoning\/Steps)/gi, '')
+        .trim();
+
+    const commandStart = "Image Generated:";
     
-    // 1. QUICK CHECK: If the text doesn't even contain the core phrase, exit immediately.
-    if (!lowerText.includes("image generated")) {
+    // 2. QUICK CHECK (startsWith concept): Check if the cleaned text starts with the command phrase, 
+    // tolerating an optional colon and space immediately following it.
+    if (!cleanText.toLowerCase().startsWith(commandStart.toLowerCase().replace(':', '')) &&
+        !cleanText.toLowerCase().startsWith(commandStart.toLowerCase())) {
         return null;
     }
     
-    // 2. EXTRACTION: The command is present, so now we clean and use a flexible regex to get the parts.
-    
-    // Aggressive cleanup for extra characters/formatting the model might add
-    let cleanText = text.trim()
-        .replace(/\n/g, ' ') 
-        .replace(/(\*\*|🧠|Reasoning\/Steps)/gi, '') // Remove bolding, emoji, and header text
-        .trim();
-
-    // Regex to capture the prompt (G1) and model (G2), being very tolerant of spacing and the colon.
+    // 3. EXTRACTION: The command is confirmed to be present at the start. Use the most robust regex
+    // to capture the prompt (G1) and model (G2), tolerating any remaining spaces/colons.
     const imgCommandRegex = /^\s*Image Generated\s*:?\s*(.*?)\s*,\s*model used:\s*(.*?)\s*,\s*number of images 1\(always\)\s*$/i;
 
     const match = cleanText.match(imgCommandRegex);
@@ -152,7 +153,7 @@ function parseImageGenerationCommand(text) {
         };
     }
     
-    // If the quick check passed but the extraction failed (e.g., command was cut off), return null.
+    // Fallback if startsWith passed but the command was malformed (e.g., cut off).
     return null;
 }
 
