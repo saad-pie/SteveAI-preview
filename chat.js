@@ -49,7 +49,7 @@ function shouldSummarize() {
  * @returns {number} Random delay in milliseconds.
  */
 function getRandomTypingDelay() {
-    return Math.floor(Math.random() * (10 - 1 + 1)) + 1;
+    return Math.floor(Math.random() * (2 - 1 + 1)) + 1;
 }
 
 // --- Summarization ---
