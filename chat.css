@@ -1,6 +1,6 @@
 /* ============================
-   SteveAI — Full Old Chat UI
-   Complete CSS (2024 version)
+   SteveAI — Full Modern Chat UI
+   Fixed CSS (Aligned with chat.js module)
    ============================ */
 
 /* -------- GLOBAL -------- */
@@ -9,7 +9,7 @@ body {
   background: #0d0d0d;
   color: #fff;
   font-family: 'Inter', sans-serif;
-  overflow: hidden;
+  overflow: hidden; /* Prevents body scroll */
   transition: background 0.3s, color 0.3s;
 }
 
@@ -27,6 +27,11 @@ body.light {
   background: #111;
   color: #fff;
   border-bottom: 1px solid #333;
+}
+body.light #header {
+  background: #fff;
+  border-bottom: 1px solid #ccc;
+  color: #000;
 }
 
 /* LOGO */
@@ -51,13 +56,6 @@ body.light {
   justify-content: center;
 }
 
-.logo-icon img {
-  width: 100%;
-  height: 100%;
-  border-radius: 8px;
-  object-fit: cover;
-}
-
 body.light .logo-icon {
   background: #e6e6e6;
   border: 1px solid #ccc;
@@ -78,6 +76,7 @@ body.light .logo-icon {
   border-radius: 6px;
   cursor: pointer;
   transition: 0.2s;
+  font-size: 1em; /* Ensures emoji/text buttons are legible */
 }
 
 .action-btn:hover {
@@ -97,6 +96,7 @@ body.light .action-btn {
   border: 1px solid #333;
   padding: 6px;
   border-radius: 6px;
+  appearance: none; /* Custom styling for dropdown */
 }
 
 body.light #modeSelect {
@@ -107,7 +107,8 @@ body.light #modeSelect {
 
 /* -------- CHAT AREA -------- */
 #chat {
-  height: calc(100vh - 148px);
+  /* Adjusted height to accommodate the fixed header/input */
+  height: calc(100vh - 150px); 
   overflow-y: auto;
   padding: 20px;
   scroll-behavior: smooth;
@@ -122,50 +123,126 @@ body.light #modeSelect {
   background: #333;
   border-radius: 10px;
 }
+body.light #chat::-webkit-scrollbar-thumb {
+  background: #bbb;
+}
 
-/* -------- MESSAGE BUBBLES -------- */
-.message {
+/* -------- MESSAGE BUBBLES (MODERN STRUCTURE) -------- */
+
+.message-container {
+  display: flex;
+  margin-bottom: 15px;
+  /* Action buttons hover on the right side of the container */
+  position: relative; 
+}
+
+.bubble {
   max-width: 85%;
   padding: 10px 14px;
-  margin-bottom: 14px;
-  border-radius: 10px;
+  border-radius: 18px;
   line-height: 1.45;
   font-size: 0.95em;
-  white-space: pre-wrap;
   word-wrap: break-word;
 }
 
-/* USER */
-.user {
-  background: #4e42ff;
-  margin-left: auto;
-  border-bottom-right-radius: 4px;
-  color: #fff;
+.bubble-content p:first-child {
+  margin-top: 0;
+}
+.bubble-content p:last-child {
+  margin-bottom: 0;
 }
 
-/* AI */
-.ai {
+/* USER STYLES */
+.message-container.user {
+  justify-content: flex-end; /* Push container to the right */
+}
+
+.bubble.user {
+  background: #4e42ff;
+  color: #fff;
+  /* Tail appearance */
+  border-bottom-right-radius: 4px; 
+}
+
+body.light .bubble.user {
+  background: #6a5bff;
+}
+
+/* BOT (AI) STYLES */
+.message-container.bot {
+  justify-content: flex-start; /* Push container to the left */
+}
+
+.bubble.bot {
   background: #1a1a1a;
+  color: #fff;
   border: 1px solid #333;
+  /* Tail appearance */
   border-bottom-left-radius: 4px;
 }
 
-/* LIGHT MODE FIXES */
-body.light .ai {
+body.light .bubble.bot {
   background: #fff;
   border: 1px solid #ccc;
   color: #000;
 }
 
-body.light .user {
-  background: #6a5bff;
+/* MESSAGE ACTIONS (Copy/Resend/Speak buttons) */
+.message-actions {
+  display: flex;
+  gap: 5px;
+  /* Positioning relative to the message-container */
+  position: absolute;
+  top: -10px; /* Position above the bubble */
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.2s, visibility 0.2s;
+  z-index: 10;
 }
+
+.message-container:hover .message-actions {
+  visibility: visible;
+  opacity: 1;
+}
+
+.message-container.user .message-actions {
+  /* Position user actions to the left of the bubble */
+  right: calc(85% + 10px); 
+}
+
+.message-container.bot .message-actions {
+  /* Position bot actions to the right of the bubble */
+  left: calc(85% + 10px); 
+}
+
+/* Actions button styling inside messages */
+.message-actions .action-btn {
+    padding: 2px 5px;
+    font-size: 0.8em;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    border: none;
+    line-height: 1;
+}
+.message-actions .action-btn:hover {
+    background: rgba(0, 0, 0, 0.8);
+}
+body.light .message-actions .action-btn {
+    background: rgba(255, 255, 255, 0.8);
+    color: #111;
+    border: 1px solid #ccc;
+}
+body.light .message-actions .action-btn:hover {
+    background: rgba(255, 255, 255, 1);
+}
+
 
 /* -------- TYPING INDICATOR -------- */
 .typing {
   display: flex;
   gap: 5px;
   margin-bottom: 12px;
+  padding: 10px 14px; /* Matches bubble padding */
 }
 
 .typing span {
@@ -174,6 +251,9 @@ body.light .user {
   background: white;
   border-radius: 50%;
   animation: blink 0.8s infinite alternate;
+}
+body.light .typing span {
+    background: #111;
 }
 
 .typing span:nth-child(2) {
@@ -233,6 +313,11 @@ body.light #commandHints span {
   background: #111;
   display: flex;
   justify-content: center;
+  position: fixed; /* Fixed to the bottom */
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
 }
 
 body.light #inputContainer {
@@ -240,9 +325,17 @@ body.light #inputContainer {
   border-top: 1px solid #ccc;
 }
 
+/* FORM/INPUT FLEX LAYOUT */
+#inputForm {
+    display: flex;
+    width: 100%;
+    max-width: 800px;
+    gap: 10px;
+}
+
 /* TEXTBOX */
 textarea {
-  width: 80%;
+  flex-grow: 1; /* Allows it to take up most of the space */
   resize: none;
   background: #1a1a1a;
   color: #fff;
@@ -268,11 +361,13 @@ body.light textarea {
 #sendBtn {
   background: #4e42ff;
   color: white;
-  padding: 0 16px;
+  width: 40px; /* Fixed width/height */
+  height: 40px;
+  padding: 0;
   border: none;
-  margin-left: 10px;
   border-radius: 10px;
-  font-size: 1.3em;
+  font-size: 1.5em;
+  line-height: 1;
   cursor: pointer;
   transition: 0.2s;
 }
