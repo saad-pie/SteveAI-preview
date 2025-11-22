@@ -11,107 +11,157 @@
   <link rel="icon" href="/assets/favicon.png" />
 
   <style>
+    /* 1. Global Reset & Base Styling (Consistent Dark Theme) */
     body {
-      font-family: system-ui, sans-serif;
-      background: #0f0f0f;
-      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #0c0c0c; /* Deep Dark Background */
+      color: #e0e0e0; /* Light Gray Text */
       margin: 0;
       padding: 0;
       text-align: center;
+      min-height: 100vh;
     }
+
+    /* 2. Header Styling (Consistent Accent) */
     header {
-      background: #111;
-      padding: 1em;
+      background: #1a1a1a;
+      padding: 1rem 2rem;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
       display: flex;
       justify-content: center;
       gap: 1.5em;
       font-weight: 600;
+      border-bottom: 2px solid #00ffcc; /* Matching accent line */
     }
     header a {
-      color: #ffae00;
+      color: #e0e0e0;
       text-decoration: none;
-      transition: opacity 0.2s;
+      padding: 0.5rem 0.8rem;
+      border-radius: 4px;
+      transition: background-color 0.2s, color 0.2s;
     }
-    header a:hover {
-      opacity: 0.7;
+    header a:hover, header a.active {
+      background-color: #2c2c2c;
+      color: #00ffcc; /* Accent color */
     }
+
     main {
-      padding: 2em;
+      max-width: 1200px;
+      width: 90%;
+      margin: 2rem auto;
+      padding: 0 1rem;
     }
+    main h1 {
+        color: #00ffcc; /* Accent color for title */
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+    main p {
+        color: #aaa;
+        margin-bottom: 2rem;
+    }
+
+    /* 3. Controls Styling */
     .controls {
         display: flex;
         flex-direction: column;
         align-items: center;
         gap: 1em;
-        margin-bottom: 2em; /* Added margin for spacing */
+        padding: 1.5em;
+        background: #1a1a1a;
+        border-radius: 12px;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
     }
+    
     input, button, select {
       border: none;
-      padding: 0.7em 1em;
-      border-radius: 0.5em;
+      padding: 0.8em 1.2em;
+      border-radius: 8px; /* Slightly larger radius */
       font-size: 1em;
+      transition: all 0.2s;
     }
     input {
-      width: 80%;
-      background: #222;
+      width: 100%;
+      background: #2c2c2c;
       color: #fff;
+      border: 1px solid #3a3a3a;
+      box-sizing: border-box;
     }
     select {
-        width: 80%;
+        width: 100%;
         max-width: 300px;
-        background: #222;
+        background: #2c2c2c;
         color: #fff;
-        text-align: center;
-        appearance: none; /* Remove default arrow */
-        background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23ffae00%22%20d%3D%22M287%2C114.7L154.7%2C247.1c-2.4%2C2.4-5.8%2C3.7-9.3%2C3.7s-6.9-1.3-9.3-3.7L5.4%2C114.7c-4.9-4.9-4.9-12.8%2C0-17.7s12.8-4.9%2C17.7%2C0L145.4%2C208.7c2.4%2C2.4%2C6.2%2C2.4%2C8.6%2C0l122.4-111.7c4.9-4.9%2C12.8-4.9%2C17.7%2C0S291.9%2C109.8%2C287%2C114.7z%22%2F%3E%3C%2Fsvg%3E");
+        text-align: left;
+        appearance: none;
+        border: 1px solid #3a3a3a;
+        background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2300ffcc%22%20d%3D%22M287%2C114.7L154.7%2C247.1c-2.4%2C2.4-5.8%2C3.7-9.3%2C3.7s-6.9-1.3-9.3-3.7L5.4%2C114.7c-4.9-4.9-4.9-12.8%2C0-17.7s12.8-4.9%2C17.7%2C0L145.4%2C208.7c2.4%2C2.4%2C6.2%2C2.4%2C8.6%2C0l122.4-111.7c4.9-4.9%2C12.8-4.9%2C17.7%2C0S291.9%2C109.8%2C287%2C114.7z%22%2F%3E%3C%2Fsvg%3E");
         background-repeat: no-repeat;
-        background-position: right 0.7em top 50%;
+        background-position: right 0.7em center;
         background-size: 0.65em auto;
+        padding-right: 2.5em; /* Make space for the arrow */
     }
     button {
-      background: #ffae00;
-      color: #111;
+      background: #00ffcc; /* Main accent color */
+      color: #0c0c0c;
       cursor: pointer;
-      font-weight: 600;
-      width: 80%;
+      font-weight: 700;
+      width: 100%;
       max-width: 300px;
+      box-shadow: 0 4px 10px rgba(0, 255, 204, 0.4);
     }
     button:hover {
-      background: #ffc107;
+      background: #00e6b8;
+      box-shadow: 0 6px 15px rgba(0, 255, 204, 0.6);
+      transform: translateY(-2px);
     }
+    
+    /* 4. Result Grid Styling */
     #result {
-        margin-top: 2em;
+        margin-top: 3em;
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Responsive grid */
-        gap: 1em;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+        gap: 2em;
         justify-items: center;
     }
     #result div {
         background: #1a1a1a;
-        padding: 1em;
-        border-radius: 1em;
-        box-shadow: 0 0 10px rgba(255, 174, 0, 0.2);
+        padding: 1.5em;
+        border-radius: 12px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.5), inset 0 0 5px rgba(0, 255, 204, 0.1);
+        width: 100%;
+        box-sizing: border-box;
+        max-width: 400px;
     }
     #result img {
       width: 100%;
       height: auto;
-      border-radius: 0.7em;
-      margin-bottom: 0.5em;
+      border-radius: 8px;
+      margin-bottom: 0.8em;
+      border: 1px solid #3a3a3a;
     }
-    @media (min-width: 600px) {
+    #result p a {
+        color: #00ffcc; /* Use the main accent color for links */
+        font-weight: 500;
+    }
+
+    /* 5. Media Queries for Desktop Layout */
+    @media (min-width: 800px) {
         .controls {
             flex-direction: row;
             justify-content: center;
+            gap: 1.5em;
         }
         input {
-            width: 30%; /* Adjusted width */
+            width: 40%; 
+            max-width: 500px;
         }
         select, button {
-            width: auto;
+            width: 150px; /* Fixed width for better alignment */
             max-width: none;
         }
         #result {
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
         }
     }
   </style>
@@ -122,7 +172,7 @@
     <a href="/about.html">About</a>
     <a href="/docs.html">Docs</a>
     <a href="/chat.html">Chat</a>
-    <a href="/image.html">Image</a>
+    <a href="/image.html" class="active">Image</a>
   </header>
 
   <main>
@@ -130,7 +180,7 @@
     <p>Enter a prompt, select your AI model, and choose how many images to generate.</p>
     
     <div class="controls">
-        <input type="text" id="prompt" placeholder="e.g. A cute baby sea otter" />
+        <input type="text" id="prompt" placeholder="e.g. A cute baby sea otter, digital art" />
         <select id="modelSelect"></select>
         <select id="numImagesSelect">
             <option value="1">1 Image</option>
@@ -145,21 +195,29 @@
   </main>
 
   <script type="module">
+    // NOTE: This script assumes the presence of 'image.js' with the required exports.
     import { generateImage, IMAGE_MODELS } from './image.js'; 
     
     const generateBtn = document.getElementById("generateBtn");
     const promptInput = document.getElementById("prompt");
     const resultDiv = document.getElementById("result");
     const modelSelect = document.getElementById("modelSelect");
-    const numImagesSelect = document.getElementById("numImagesSelect"); // New select element
+    const numImagesSelect = document.getElementById("numImagesSelect");
 
     function populateModelSelect() {
+        // Ensure IMAGE_MODELS is defined and iterable
+        if (typeof IMAGE_MODELS === 'undefined' || !Array.isArray(IMAGE_MODELS)) {
+            console.error("IMAGE_MODELS is not correctly defined in image.js");
+            return;
+        }
+
         IMAGE_MODELS.forEach((model) => {
             const option = document.createElement('option');
             option.value = model.id;
             option.textContent = model.name;
-            if (model.id === "provider-4/imagen-4") { 
-                option.selected = true; // Default to Imagen 4
+            // Setting a default value based on ID (or just the first one if the ID isn't guaranteed)
+            if (model.id === "provider-4/imagen-4" || model === IMAGE_MODELS[0]) { 
+                option.selected = true; 
             }
             modelSelect.appendChild(option);
         });
@@ -170,37 +228,39 @@
     generateBtn.addEventListener("click", async () => {
       const prompt = promptInput.value.trim();
       const selectedModel = modelSelect.value; 
-      const numImages = parseInt(numImagesSelect.value, 10); // Get number of images as an integer
+      const numImages = parseInt(numImagesSelect.value, 10); 
 
       if (!prompt) return alert("Please enter a prompt!");
 
-      resultDiv.innerHTML = `<p style="color:#aaa">Generating **${numImages}** image(s) with **${modelSelect.options[modelSelect.selectedIndex].textContent}**...</p>`;
+      // Update button state and status
+      generateBtn.disabled = true;
+      const selectedModelName = modelSelect.options[modelSelect.selectedIndex].textContent;
+      resultDiv.innerHTML = `<p style="color:#00ffcc;">Generating **${numImages}** image(s) with **${selectedModelName}**. Please wait...</p>`;
 
       try {
-        // Pass the number of images to the generation function
         const imageUrls = await generateImage(prompt, selectedModel, numImages); 
         
         if (!imageUrls || imageUrls.length === 0) {
-          resultDiv.innerHTML = `<p style="color:red;">Error: No images returned.</p>`;
+          resultDiv.innerHTML = `<p style="color:red;">Error: No images returned. Check the API response and quotas.</p>`;
           return;
         }
 
-        // Clear previous results
         resultDiv.innerHTML = ''; 
 
-        // Display each image in its own container
         imageUrls.forEach((url, index) => {
             const imageContainer = document.createElement('div');
             imageContainer.innerHTML = `
                 <img src="${url}" alt="Generated Image ${index + 1}">
-                <p><a href="${url}" target="_blank" style="color:#ffae00;">Open full size</a></p>
+                <p><a href="${url}" target="_blank" style="color:#00ffcc;">Open full size (Image ${index + 1})</a></p>
             `;
             resultDiv.appendChild(imageContainer);
         });
 
       } catch (err) {
         console.error(err);
-        resultDiv.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
+        resultDiv.innerHTML = `<p style="color:red;">Error: ${err.message}. Ensure image.js is correctly configured with a secure proxy/endpoint and API key.</p>`;
+      } finally {
+        generateBtn.disabled = false;
       }
     });
   </script>
